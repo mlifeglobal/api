@@ -1,0 +1,5 @@
+node_modules/
+secret.js
+
+assets
+.DS_Store
