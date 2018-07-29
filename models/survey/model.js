@@ -48,7 +48,9 @@ module.exports = (bcrypt, config, JWT, mail, moment, Sequelize, twilio, uuid, am
   },
   classMethods: {},
   instanceMethods: {},
-  associations: {},
+  associations: {
+    hasMany: ['Question', 'ParticipantSurvey', 'ParticipantAnswer'],
+  },
   hooks: {},
   indexes: [],
   timestamps: true,
