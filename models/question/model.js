@@ -18,9 +18,10 @@ module.exports = Sequelize => ({
     },
     order: {
       type: Sequelize.INTEGER,
-      autoIncrement: true
+      autoIncrement: false,
+      field: 'order'
     },
-    surveyId: {
+    surveyID: {
       type: Sequelize.INTEGER,
       allowNull: false,
       field: 'survey_id',
