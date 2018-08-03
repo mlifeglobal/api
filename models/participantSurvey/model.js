@@ -1,4 +1,4 @@
-module.exports = (bcrypt, config, JWT, mail, moment, Sequelize, twilio, uuid, amplitude, aws) => ({
+module.exports = Sequelize => ({
   attributes: {
     status: {
       type: Sequelize.ENUM,
@@ -34,7 +34,5 @@ module.exports = (bcrypt, config, JWT, mail, moment, Sequelize, twilio, uuid, am
   associations: {
     belongsTo: ['Participant', 'Survey']
   },
-  indexes: [
-    { fields: ['participant_id', 'survey_id'] }
-  ]
+  indexes: [{ fields: ['participant_id', 'survey_id'] }]
 })

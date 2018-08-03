@@ -1,4 +1,4 @@
-module.exports = (bcrypt, config, JWT, mail, moment, Sequelize, twilio, uuid, amplitude, aws) => ({
+module.exports = Sequelize => ({
   attributes: {
     phone: {
       type: Sequelize.STRING,

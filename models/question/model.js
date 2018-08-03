@@ -1,4 +1,4 @@
-module.exports = (bcrypt, config, JWT, mail, moment, Sequelize, twilio, uuid, amplitude, aws) => ({
+module.exports = Sequelize => ({
   attributes: {
     questionType: {
       type: Sequelize.ENUM,
@@ -36,7 +36,5 @@ module.exports = (bcrypt, config, JWT, mail, moment, Sequelize, twilio, uuid, am
     belongsTo: 'Survey',
     hasMany: ['ParticipantAnswer']
   },
-  indexes: [
-    { fields: ['survey_id'] }
-  ]
+  indexes: [{ fields: ['survey_id'] }]
 })

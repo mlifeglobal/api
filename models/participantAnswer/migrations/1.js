@@ -47,11 +47,23 @@ module.exports = Sequelize => ({
           field: 'created_date'
         }
       })
-      .then(() => queryInterface.addIndex('participant_answers', ['participant_id', 'survey_id', 'question_id']))
+      .then(() =>
+        queryInterface.addIndex('participant_answers', [
+          'participant_id',
+          'survey_id',
+          'question_id'
+        ])
+      )
   },
   down (queryInterface) {
     return queryInterface
       .dropTable('participant_answers')
-      .then(() => queryInterface.removeIndex('participant_answers', ['participant_id', 'survey_id', 'question_id']))
+      .then(() =>
+        queryInterface.removeIndex('participant_answers', [
+          'participant_id',
+          'survey_id',
+          'question_id'
+        ])
+      )
   }
 })

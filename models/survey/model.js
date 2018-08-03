@@ -1,4 +1,4 @@
-module.exports = (bcrypt, config, JWT, mail, moment, Sequelize, twilio, uuid, amplitude, aws) => ({
+module.exports = Sequelize => ({
   attributes: {
     name: {
       type: Sequelize.STRING,
@@ -49,7 +49,7 @@ module.exports = (bcrypt, config, JWT, mail, moment, Sequelize, twilio, uuid, am
   classMethods: {},
   instanceMethods: {},
   associations: {
-    hasMany: ['Question', 'ParticipantSurvey', 'ParticipantAnswer'],
+    hasMany: ['Question', 'ParticipantSurvey', 'ParticipantAnswer']
   },
   hooks: {},
   indexes: [],
