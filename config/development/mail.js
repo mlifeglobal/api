@@ -3,7 +3,8 @@ module.exports = {
     host: 'smtp.gmail.com',
     port: 465,
     secure: true,
-    auth: { // sample email credentials
+    auth: {
+      // sample email credentials
       user: '',
       pass: ''
     }

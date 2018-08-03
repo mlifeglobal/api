@@ -43,5 +43,6 @@ module.exports = Sequelize => ({
   },
   indexes: [{ fields: ['participant_id', 'survey_id', 'question_id'] }],
   timestamps: true,
-  createdAt: 'createdDate'
+  createdAt: 'createdDate',
+  updatedAt: false
 })

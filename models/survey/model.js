@@ -55,6 +55,7 @@ module.exports = Sequelize => ({
   indexes: [],
   timestamps: true,
   createdAt: 'createdDate',
+  updatedAt: false,
   publishedDate: false,
   closedDate: false
 })
