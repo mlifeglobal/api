@@ -12,6 +12,10 @@ module.exports = Sequelize => ({
       defaultValue: 'single',
       field: 'answer_type'
     },
+    question: {
+      type: Sequelize.STRING,
+      field: 'question'
+    },
     predefindAnswers: {
       type: Sequelize.JSON,
       field: 'predefined_answers'

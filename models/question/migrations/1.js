@@ -25,6 +25,10 @@ module.exports = Sequelize => ({
           type: Sequelize.JSON,
           field: 'predefined_answers'
         },
+        question: {
+          type: Sequelize.STRING,
+          field: 'question'
+        },
         order: {
           type: Sequelize.INTEGER,
           autoIncrement: false,
