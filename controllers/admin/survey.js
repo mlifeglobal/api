@@ -127,5 +127,84 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
 
       ctx.body = { data: { surveyId: survey.id } }
     }
+  },
+  addOptInCodes: {
+    schema: [
+      [
+        'data',
+        true,
+        [['surveyId', true, 'integer'], ['optInCodes', true, 'array']]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { surveyId, optInCodes }
+      } = ctx.request.body
+
+      const survey = await Survey.findOne({ where: { id: surveyId } })
+      if (!survey) {
+        return Bluebird.reject([
+          { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
+        ])
+      }
+
+      await survey.update({
+        optInCodes: lodash.union(survey.optInCodes, optInCodes)
+      })
+
+      ctx.body = { data: { surveyId: survey.id } }
+    }
+  },
+  removeOptInCodes: {
+    schema: [
+      [
+        'data',
+        true,
+        [['surveyId', true, 'integer'], ['optInCodes', true, 'array']]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { surveyId, optInCodes }
+      } = ctx.request.body
+
+      const survey = await Survey.findOne({ where: { id: surveyId } })
+      if (!survey) {
+        return Bluebird.reject([
+          { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
+        ])
+      }
+
+      await survey.update({
+        optInCodes: lodash.remove(
+          survey.optInCodes,
+          platform => !optInCodes.includes(platform)
+        )
+      })
+
+      ctx.body = { data: { surveyId: survey.id } }
+    }
+  },
+  changeState: {
+    schema: [['data', true, [['surveyId', true, 'integer'], ['state', true]]]],
+    async method (ctx) {
+      const {
+        data: { surveyId, state }
+      } = ctx.request.body
+
+      const survey = await Survey.findOne({ where: { id: surveyId } })
+      if (!survey) {
+        return Bluebird.reject([
+          { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
+        ])
+      }
+
+      survey.update({ state })
+      ctx.body = { data: { surveyId } }
+    },
+    onError (error) {
+      if (error instanceof Sequelize.DatabaseError) {
+      }
+    }
   }
 })
