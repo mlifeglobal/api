@@ -38,9 +38,6 @@ module.exports = Sequelize => ({
       field: 'created_date'
     }
   },
-  associations: {
-    belongsTo: ['Participant', 'Survey', 'Question']
-  },
   indexes: [{ fields: ['participant_id', 'survey_id', 'question_id'] }],
   timestamps: true,
   createdAt: 'createdDate',

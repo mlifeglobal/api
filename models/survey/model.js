@@ -49,7 +49,8 @@ module.exports = Sequelize => ({
   classMethods: {},
   instanceMethods: {},
   associations: {
-    hasMany: ['Question', 'ParticipantSurvey', 'ParticipantAnswer']
+    hasMany: 'Question',
+    belongsToMany: { model: 'Participant', through: 'participant_surveys' }
   },
   hooks: {},
   indexes: [],

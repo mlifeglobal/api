@@ -14,6 +14,9 @@ module.exports = Sequelize => ({
     }
   },
   associations: {
-    hasMany: ['ParticipantSurvey', 'ParticipantAnswer']
+    belongsToMany: [
+      { model: 'Survey', through: 'participant_surveys' },
+      { model: 'Question', through: 'participant_answers' }
+    ]
   }
 })

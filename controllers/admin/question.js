@@ -55,7 +55,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question) => ({
 
       await question.destroy()
 
-      ctx.body = { data: questionId }
+      ctx.body = { data: { questionId } }
     }
   },
 

@@ -38,8 +38,8 @@ module.exports = Sequelize => ({
     }
   },
   associations: {
-    belongsTo: 'Survey',
-    hasMany: ['ParticipantAnswer']
+    // belongsTo: 'Survey',
+    belongsToMany: { model: 'Participant', through: 'participant_answers' }
   },
   indexes: [{ fields: ['survey_id'] }]
 })

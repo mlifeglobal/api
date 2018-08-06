@@ -31,8 +31,5 @@ module.exports = Sequelize => ({
       onUpdate: 'CASCADE'
     }
   },
-  associations: {
-    belongsTo: ['Participant', 'Survey']
-  },
   indexes: [{ fields: ['participant_id', 'survey_id'] }]
 })
