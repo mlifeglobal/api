@@ -1,14 +1,16 @@
 module.exports = (Sequelize, Bluebird, Survey, Question) => ({
-  add: {
+  create: {
     schema: [
-      'data',
-      true,
       [
-        ['question', true],
-        ['questionType', true],
-        ['answerType', true],
-        ['surveyID', true, 'integer'],
-        ['predefindAnswers', true, 'json']
+        'data',
+        true,
+        [
+          ['question', true],
+          ['questionType', true],
+          ['answerType', true],
+          ['surveyID', true, 'integer'],
+          ['predefindAnswers', true, 'object']
+        ]
       ]
     ],
     async method (ctx) {
@@ -38,9 +40,8 @@ module.exports = (Sequelize, Bluebird, Survey, Question) => ({
       ctx.body = { data: { questionId: quest.id } }
     }
   },
-
   delete: {
-    schema: ['data', true, [['questionId', true]]],
+    schema: [['data', true, [['questionId', true, 'integer']]]],
     async method (ctx) {
       const {
         data: { questionId }
@@ -58,17 +59,18 @@ module.exports = (Sequelize, Bluebird, Survey, Question) => ({
       ctx.body = { data: { questionId } }
     }
   },
-
   update: {
     schema: [
-      'data',
-      true,
       [
-        ['questionId', true, 'integer'],
-        ['question'],
-        ['predefindAnswers'],
-        ['questionType'],
-        ['answerType']
+        'data',
+        true,
+        [
+          ['questionId', true, 'integer'],
+          ['question'],
+          ['predefinedAnswers'],
+          ['questionType'],
+          ['answerType']
+        ]
       ]
     ],
     async method (ctx) {
