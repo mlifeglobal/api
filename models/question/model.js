@@ -23,7 +23,8 @@ module.exports = Sequelize => ({
     order: {
       type: Sequelize.INTEGER,
       autoIncrement: false,
-      field: 'order'
+      defaultValue: 0,
+      field: 'question_order'
     },
     surveyID: {
       type: Sequelize.INTEGER,
@@ -35,6 +36,15 @@ module.exports = Sequelize => ({
       },
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE'
+    }
+  },
+  hooks: {
+    beforeCreate: async (question) => {
+      order = await question.constructor.max('question_order',
+        { where: { surveyID: question.surveyID } })
+
+      if (isNaN(order)) question.order = 1
+      else question.order = order + 1
     }
   },
   associations: {

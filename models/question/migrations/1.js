@@ -1,5 +1,5 @@
 module.exports = Sequelize => ({
-  up (queryInterface) {
+  up(queryInterface) {
     return queryInterface
       .createTable('questions', {
         id: {
@@ -31,7 +31,9 @@ module.exports = Sequelize => ({
         },
         order: {
           type: Sequelize.INTEGER,
-          field: 'order'
+          autoIncrement: false,
+          defaultValue: 0,
+          field: 'question_order'
         },
         surveyID: {
           type: Sequelize.INTEGER,
@@ -47,7 +49,7 @@ module.exports = Sequelize => ({
       })
       .then(() => queryInterface.addIndex('questions', ['survey_id']))
   },
-  down (queryInterface) {
+  down(queryInterface) {
     return queryInterface
       .dropTable('questions')
       .then(() => queryInterface.removeIndex('questions', ['survey_id']))
