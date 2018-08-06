@@ -7,7 +7,8 @@ module.exports = (Sequelize, Bluebird, Survey, Question) => ({
         ['question', true],
         ['questionType', true],
         ['answerType', true],
-        ['surveyID', true, 'integer'][('predefindAnswers', true, 'json')]
+        ['surveyID', true, 'integer'],
+        ['predefindAnswers', true, 'json']
       ]
     ],
     async method (ctx) {
@@ -96,7 +97,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question) => ({
 
       await quest.update(updatedObj)
 
-      ctx.body = { question: quest.id }
+      ctx.body = { data: { question: quest.id } }
     }
   }
 })
