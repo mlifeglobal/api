@@ -13,7 +13,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question) => ({
         ]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { question, questionType, answerType, surveyID, predefindAnswers }
       } = ctx.request.body
@@ -42,7 +42,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question) => ({
   },
   delete: {
     schema: [['data', true, [['questionId', true, 'integer']]]],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { questionId }
       } = ctx.request.body
@@ -73,7 +73,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question) => ({
         ]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: {
           questionId,
@@ -100,6 +100,50 @@ module.exports = (Sequelize, Bluebird, Survey, Question) => ({
       await quest.update(updatedObj)
 
       ctx.body = { data: { question: quest.id } }
+    }
+  },
+
+  changeOrder: {
+    schema: [
+      'data',
+      true,
+      [
+        ['questionId1', true, 'integer'],
+        ['questionId2', true, 'integer']
+      ]
+    ],
+    async method(ctx) {
+      const {
+        data: {
+          questionId1, questionId2
+        }
+      } = ctx.request.body
+
+      const question1 = await Question.findOne({ where: { id: questionId1 } })
+      if (!question1) {
+        return Bluebird.reject([
+          { key: 'questionId1', value: `Question not found for ID: ${questionId1}` }
+        ])
+      }
+      const question2 = await Question.findOne({ where: { id: questionId2 } })
+      if (!question2) {
+        return Bluebird.reject([
+          { key: 'questionId2', value: `Question not found for ID: ${questionId2}` }
+        ])
+      }
+
+      if (question1.surveyID != question2.surveyID) {
+        return Bluebird.reject([{
+          key: 'survey mismatch', value: 'Questions do not belong to the same survey'
+        }]
+        )
+      }
+
+      let tempOrder = question1.order
+      await question1.update({ order: question2.order })
+      await question2.update({ order: tempOrder })
+
+      ctx.body = { data: "success" }
     }
   }
 })
