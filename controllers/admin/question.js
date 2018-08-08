@@ -67,7 +67,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question) => ({
         [
           ['questionId', true, 'integer'],
           ['question'],
-          ['predefinedAnswers'],
+          ['predefindAnswers', 'object'],
           ['questionType'],
           ['answerType']
         ]
@@ -99,19 +99,18 @@ module.exports = (Sequelize, Bluebird, Survey, Question) => ({
 
       await quest.update(updatedObj)
 
-      ctx.body = { data: { question: quest.id } }
+      ctx.body = { data: updatedObj }
     }
   },
 
   changeOrder: {
     schema: [
-      'data',
-      true,
-      [
-        ['questionId1', true, 'integer'],
-        ['questionId2', true, 'integer']
-      ]
-    ],
+      ['data',
+        true,
+        [
+          ['questionId1', true, 'integer'],
+          ['questionId2', true, 'integer']]
+      ]],
     async method(ctx) {
       const {
         data: {
@@ -144,6 +143,57 @@ module.exports = (Sequelize, Bluebird, Survey, Question) => ({
       await question2.update({ order: tempOrder })
 
       ctx.body = { data: "success" }
+    }
+  },
+
+  setBranch: {
+    schema: [
+      ['data',
+        true,
+        [
+          ['questionId', true, 'integer'],
+          ['answerKey', true],
+          ['skipQuestions', true, 'array']]
+      ]],
+    async method(ctx) {
+      const {
+        data: {
+          questionId,
+          answerKey,
+          skipQuestions
+        }
+      } = ctx.request.body
+
+      if (skipQuestions.length == 0) {
+        return Bluebird.reject([
+          { key: 'skipQuestions', value: `No skip question ids have been provided` }
+        ])
+      }
+      const quest = await Question.findOne({ where: { id: questionId } })
+      if (!quest) {
+        return Bluebird.reject([
+          { key: 'question', value: `Question not found for ID: ${questionId}` }
+        ])
+      }
+
+      predAnswers = quest.predefindAnswers
+      console.log(predAnswers[answerKey])
+      if (!answerKey in predAnswers) {
+        return Bluebird.reject([{
+          key: 'answerKey', value: `AnswerKey ${answerKey} not 
+          found for  question ID: ${questionId}`
+        }
+        ])
+      }
+      if ('skipQuestions' in predAnswers[answerKey]) {
+        predAnswers[answerKey]['skipQuestions'] =
+          predAnswers[answerKey]['skipQuestions'].concat(skipQuestions)
+      }
+      else predAnswers[answerKey]['skipQuestions'] = skipQuestions
+
+      await quest.update({ predefindAnswers: predAnswers })
+
+      ctx.body = { data: 'successfully updated skipQuestions' }
     }
   }
 })
