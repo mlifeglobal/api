@@ -7,7 +7,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         [['name', true], ['description', true], ['incentive', true, 'integer']]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { name, description, incentive }
       } = ctx.request.body
@@ -19,7 +19,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
   },
   delete: {
     schema: [['data', true, [['surveyId', true, 'integer']]]],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { surveyId }
       } = ctx.request.body
@@ -49,7 +49,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         ]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { surveyId, name, description, incentive }
       } = ctx.request.body
@@ -79,7 +79,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         [['surveyId', true, 'integer'], ['platforms', true, 'array']]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { surveyId, platforms }
       } = ctx.request.body
@@ -92,7 +92,8 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       }
 
       await survey.update({
-        platforms: lodash.union(survey.platforms, platforms)
+        platforms: lodash.union(survey.platforms, platforms),
+        state: 'in_progress'
       })
 
       ctx.body = { data: { surveyId: survey.id } }
@@ -106,7 +107,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         [['surveyId', true, 'integer'], ['platforms', true, 'array']]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { surveyId, platforms }
       } = ctx.request.body
@@ -122,7 +123,8 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         platforms: lodash.remove(
           survey.platforms,
           platform => !platforms.includes(platform)
-        )
+        ),
+        state: 'uninitiated'
       })
 
       ctx.body = { data: { surveyId: survey.id } }
@@ -136,7 +138,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         [['surveyId', true, 'integer'], ['optInCodes', true, 'array']]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { surveyId, optInCodes }
       } = ctx.request.body
@@ -163,7 +165,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         [['surveyId', true, 'integer'], ['optInCodes', true, 'array']]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { surveyId, optInCodes }
       } = ctx.request.body
@@ -187,7 +189,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
   },
   changeState: {
     schema: [['data', true, [['surveyId', true, 'integer'], ['state', true]]]],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { surveyId, state }
       } = ctx.request.body
@@ -202,7 +204,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       survey.update({ state })
       ctx.body = { data: { surveyId } }
     },
-    onError (error) {
+    onError(error) {
       if (error instanceof Sequelize.DatabaseError) {
       }
     }
