@@ -1,5 +1,5 @@
 module.exports = Sequelize => ({
-  up(queryInterface) {
+  up (queryInterface) {
     return queryInterface
       .createTable('questions', {
         id: {
@@ -21,7 +21,7 @@ module.exports = Sequelize => ({
           defaultValue: 'single',
           field: 'answer_type'
         },
-        predefindAnswers: {
+        predefinedAnswers: {
           type: Sequelize.JSON,
           field: 'predefined_answers'
         },
@@ -49,7 +49,7 @@ module.exports = Sequelize => ({
       })
       .then(() => queryInterface.addIndex('questions', ['survey_id']))
   },
-  down(queryInterface) {
+  down (queryInterface) {
     return queryInterface
       .dropTable('questions')
       .then(() => queryInterface.removeIndex('questions', ['survey_id']))
