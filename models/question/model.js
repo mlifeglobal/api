@@ -16,10 +16,6 @@ module.exports = Sequelize => ({
       type: Sequelize.STRING,
       field: 'question'
     },
-    predefinedAnswers: {
-      type: Sequelize.JSON,
-      field: 'predefined_answers'
-    },
     order: {
       type: Sequelize.INTEGER,
       autoIncrement: false,
@@ -50,6 +46,7 @@ module.exports = Sequelize => ({
   },
   associations: {
     // belongsTo: 'Survey',
+    hasMany: 'PredefinedAnswers',
     belongsToMany: { model: 'Participant', through: 'participant_answers' }
   },
   indexes: [{ fields: ['survey_id'] }]

@@ -3,3 +3,4 @@ secret.js
 
 assets
 .DS_Store
+package-lock.json
