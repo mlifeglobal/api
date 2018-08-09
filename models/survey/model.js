@@ -8,6 +8,14 @@ module.exports = Sequelize => ({
       type: Sequelize.STRING,
       field: 'description'
     },
+    introString: {
+      type: Sequelize.STRING,
+      field: 'intro_string'
+    },
+    completionString: {
+      type: Sequelize.STRING,
+      field: 'completion_string'
+    },
     incentive: {
       type: Sequelize.INTEGER,
       field: 'incentive'

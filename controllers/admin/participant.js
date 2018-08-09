@@ -4,7 +4,8 @@ module.exports = (
   Participant,
   Survey,
   ParticipantSurvey,
-  Question
+  Question,
+  ParticipantAnswer
 ) => ({
   create: {
     schema: [['data', true, [['phone'], ['facebookId']]]],
@@ -149,7 +150,7 @@ module.exports = (
     ],
     async method (ctx) {
       const {
-        data: { participantId, surveyId, lastQuestionId }
+        data: { participantId, surveyId, lastQuestionId: givenLastQuestionId }
       } = ctx.request.body
 
       const participant = await Participant.findOne({
@@ -175,6 +176,17 @@ module.exports = (
       }
 
       let nextQuestionId
+
+      let lastQuestionId = givenLastQuestionId
+      if (!lastQuestionId) {
+        // Check ParticipantSurvey record
+        const participantSurvey = await ParticipantSurvey.findOne({
+          where: { participantId, surveyId }
+        })
+        if (participantSurvey) {
+          lastQuestionId = participantSurvey.lastAnsweredQuestionId
+        }
+      }
 
       if (lastQuestionId) {
         const lastQuestion = await Question.findOne({
@@ -218,7 +230,167 @@ module.exports = (
         nextQuestionId = firstQuestion.id
       }
 
-      ctx.body = { data: { nextQuestionId } }
+      ctx.body = {
+        data: {
+          status: nextQuestionId > 0 ? 'in_progress' : 'completed',
+          questionId: nextQuestionId
+        }
+      }
+    }
+  },
+
+  saveAnswer: {
+    schema: [
+      [
+        'data',
+        true,
+        [
+          ['participantId', true, 'integer'],
+          ['surveyId', true, 'integer'],
+          ['questionId', true, 'integer'],
+          ['answers', true, 'array']
+        ]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { participantId, surveyId, questionId, answers }
+      } = ctx.request.body
+
+      const participant = await Participant.findOne({
+        where: { id: participantId }
+      })
+      if (!participant) {
+        return Bluebird.reject([
+          {
+            key: 'Participant',
+            value: `Participant not found for ID: ${participantId}`
+          }
+        ])
+      }
+
+      const survey = await Survey.findOne({
+        where: { id: surveyId }
+      })
+      if (!survey) {
+        return Bluebird.reject([
+          {
+            key: 'Survey',
+            value: `Survey not found for ID: ${surveyId}`
+          }
+        ])
+      }
+
+      const question = await Question.findOne({
+        where: { id: questionId }
+      })
+      if (!question) {
+        return Bluebird.reject([
+          {
+            key: 'Question',
+            value: `Question not found for ID: ${questionId}`
+          }
+        ])
+      }
+
+      // Create ParticipantAnswer entry
+      const participantAnswer = await ParticipantAnswer.findOne({
+        where: { participantId, surveyId, questionId }
+      })
+      if (participantAnswer) {
+        return Bluebird.reject([
+          {
+            key: 'Participant',
+            value: `Participant has already answered question ${questionId}`
+          }
+        ])
+      }
+      let answersObj = {}
+      let mcqAnswerNotMatching
+      if (question.questionType === 'open') {
+        answersObj[answers[0]] = {}
+      } else if (question.questionType === 'mcq') {
+        if (question.answerType === 'single') {
+          if (answers.length > 1) {
+            return Bluebird.reject([
+              {
+                key: 'Question',
+                value: `Question ${
+                  question.id
+                } does not accept multiple answers.`
+              }
+            ])
+          }
+          if (Object.keys(question.predefinedAnswers).includes(answers[0])) {
+            console.log(`MCQ match: ${answers[0]}`)
+            answersObj[answers[0]] = {}
+          } else {
+            console.log(`MCQ dismatch: ${answers[0]}`)
+            mcqAnswerNotMatching = answers[0] || 'blank string'
+          }
+        } else if (question.answerType === 'multiple') {
+          for (const answer of answers) {
+            if (Object.keys(question.predefinedAnswers).includes(answer)) {
+              answersObj[answer] = {}
+            } else {
+              mcqAnswerNotMatching = answer || 'blank string'
+              break
+            }
+          }
+        }
+      }
+
+      if (mcqAnswerNotMatching) {
+        return Bluebird.reject([
+          {
+            key: 'ParticipantAnswer',
+            value: `Provided Answer [${mcqAnswerNotMatching}] does not match with predefined answers`
+          }
+        ])
+      }
+
+      await ParticipantAnswer.create({
+        participantId,
+        surveyId,
+        questionId,
+        answers: answersObj
+      })
+
+      // Get next question
+      const nextQuestion = await Question.findOne({
+        where: {
+          survey_id: surveyId,
+          order: { [Sequelize.Op.gt]: question.order }
+        },
+        order: [['order', 'ASC']]
+      })
+
+      // Update or Create ParticipantSurvey entry
+      const participantSurvey = await ParticipantSurvey.findOne({
+        where: { participantId, surveyId }
+      })
+      if (participantSurvey) {
+        const status = nextQuestion ? 'in_progress' : 'completed'
+        await participantSurvey.update({
+          status,
+          lastAnsweredQuestionId: question.id
+        })
+      } else {
+        await ParticipantSurvey.create({
+          participantId,
+          surveyId,
+          status: 'in_progress',
+          lastAnsweredQuestionId: question.id
+        })
+      }
+
+      ctx.body = {
+        data: {
+          status: nextQuestion ? 'in_progress' : 'completed',
+          answeredQuestionId: question.id,
+          nextQuestionId: nextQuestion ? nextQuestion.id : -1
+        }
+      }
     }
   }
 })

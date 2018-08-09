@@ -29,7 +29,8 @@
     "eslint-plugin-node": "5",
     "eslint-plugin-promise": "3",
     "eslint-plugin-standard": "3",
-    "nodemon": "1"
+    "nodemon": "1",
+    "prettier-eslint": "^8.8.2"
   },
   "engines": {
     "node": ">=7"

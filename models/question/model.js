@@ -16,7 +16,7 @@ module.exports = Sequelize => ({
       type: Sequelize.STRING,
       field: 'question'
     },
-    predefindAnswers: {
+    predefinedAnswers: {
       type: Sequelize.JSON,
       field: 'predefined_answers'
     },
@@ -39,9 +39,10 @@ module.exports = Sequelize => ({
     }
   },
   hooks: {
-    beforeCreate: async (question) => {
-      order = await question.constructor.max('question_order',
-        { where: { surveyID: question.surveyID } })
+    beforeCreate: async question => {
+      let order = await question.constructor.max('question_order', {
+        where: { surveyID: question.surveyID }
+      })
 
       if (isNaN(order)) question.order = 1
       else question.order = order + 1
