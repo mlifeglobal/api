@@ -4,15 +4,27 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       [
         'data',
         true,
-        [['name', true], ['description', true], ['incentive', true, 'integer']]
+        [
+          ['name', true],
+          ['description', true],
+          ['introString', true],
+          ['completionString', true],
+          ['incentive', true, 'integer']
+        ]
       ]
     ],
     async method (ctx) {
       const {
-        data: { name, description, incentive }
+        data: { name, description, introString, completionString, incentive }
       } = ctx.request.body
 
-      const survey = await Survey.create({ name, description, incentive })
+      const survey = await Survey.create({
+        name,
+        description,
+        introString,
+        completionString,
+        incentive
+      })
 
       ctx.body = { data: { surveyId: survey.id } }
     }
@@ -45,13 +57,22 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           ['surveyId', true, 'integer'],
           ['name'],
           ['description'],
+          ['introString'],
+          ['completionString'],
           ['incentive', 'integer']
         ]
       ]
     ],
     async method (ctx) {
       const {
-        data: { surveyId, name, description, incentive }
+        data: {
+          surveyId,
+          name,
+          description,
+          introString,
+          completionString,
+          incentive
+        }
       } = ctx.request.body
 
       const survey = await Survey.findOne({ where: { id: surveyId } })
@@ -64,6 +85,8 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       let updateObj = {}
       if (name) updateObj.name = name
       if (description) updateObj.description = description
+      if (introString) updateObj.introString = introString
+      if (completionString) updateObj.completionString = completionString
       if (incentive) updateObj.incentive = incentive
 
       await survey.update(updateObj)
