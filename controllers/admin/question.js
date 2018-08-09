@@ -6,10 +6,10 @@ module.exports = (Sequelize, Bluebird, Survey, Question) => ({
         true,
         [
           ['question', true],
-          ['questionType', true],
-          ['answerType', true],
+          ['questionType'],
+          ['answerType'],
           ['surveyID', true, 'integer'],
-          ['predefindAnswers', true, 'object']
+          ['predefindAnswers', 'object']
         ]
       ]
     ],
