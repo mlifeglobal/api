@@ -21,10 +21,6 @@ module.exports = Sequelize => ({
           defaultValue: 'single',
           field: 'answer_type'
         },
-        predefinedAnswers: {
-          type: Sequelize.JSON,
-          field: 'predefined_answers'
-        },
         question: {
           type: Sequelize.STRING,
           field: 'question'
@@ -35,7 +31,7 @@ module.exports = Sequelize => ({
           defaultValue: 0,
           field: 'question_order'
         },
-        surveyID: {
+        surveyId: {
           type: Sequelize.INTEGER,
           allowNull: false,
           field: 'survey_id',

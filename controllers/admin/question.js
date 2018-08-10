@@ -1,10 +1,4 @@
-module.exports = (
-  Sequelize,
-  Bluebird,
-  Survey,
-  Question,
-  PredefinedAnswers
-) => ({
+module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
   create: {
     schema: [
       [
@@ -14,7 +8,7 @@ module.exports = (
           ['question', true],
           ['questionType'],
           ['answerType'],
-          ['surveyID', true, 'integer'],
+          ['surveyId', true, 'integer'],
           ['predefinedAnswers', 'object']
         ]
       ]
@@ -25,15 +19,15 @@ module.exports = (
           question,
           questionType,
           answerType,
-          surveyID,
+          surveyId,
           predefinedAnswers
         }
       } = ctx.request.body
 
-      const survey = await Survey.findOne({ where: { id: surveyID } })
+      const survey = await Survey.findOne({ where: { id: surveyId } })
       if (!survey) {
         return Bluebird.reject([
-          { key: 'survey', value: `Survey not found for ID: ${surveyID}` }
+          { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
       }
 
@@ -42,28 +36,29 @@ module.exports = (
           { key: 'question ', value: `Question cannot be empty` }
         ])
       }
+
       const quest = await Question.create({
         question,
         questionType,
         answerType,
-        surveyID,
-        predefinedAnswers
+        surveyId
       })
+
       // Create entry for predefinedAnswers if provided
       if (predefinedAnswers && Object.keys(predefinedAnswers).length) {
-        for (var answer in predefinedAnswers) {
+        for (const answer in predefinedAnswers) {
           console.log(answer)
-          let predAnsObj = {}
-          predAnsObj.questionID = quest.id
-          predAnsObj.answerKey = answer
-          predAnsObj.answerValue = predefinedAnswers[answer]['value']
+          let answerCreateObj = {}
+          answerCreateObj.questionId = quest.id
+          answerCreateObj.answerKey = answer
+          answerCreateObj.answerValue = predefinedAnswers[answer].value
 
           if ('skipQuestions' in predefinedAnswers[answer]) {
-            predAnsObj.skipQuestions =
-              predefinedAnswers[answer]['skipQuestions']
+            answerCreateObj.skipQuestions =
+              predefinedAnswers[answer].skipQuestions
           }
 
-          const predAns = await PredefinedAnswers.create(predAnsObj)
+          await PredefinedAnswer.create(answerCreateObj)
         }
       }
       ctx.body = { data: { questionId: quest.id } }
@@ -86,6 +81,63 @@ module.exports = (
       await question.destroy()
 
       ctx.body = { data: { questionId } }
+    }
+  },
+  deleteAnswer: {
+    schema: [
+      [
+        'data',
+        true,
+        [
+          ['questionId', true, 'integer'],
+          ['answerId', 'integer'],
+          ['answerKey', 'integer']
+        ]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { questionId, answerId, answerKey }
+      } = ctx.request.body
+
+      if (!answerId && !answerKey) {
+        return Bluebird.reject([
+          {
+            key: 'PredefinedAnswer',
+            value:
+              'Predefined answer id or answer key should be provided to delete the answer.'
+          }
+        ])
+      }
+
+      const question = await Question.findOne({ where: { id: questionId } })
+      if (!question) {
+        return Bluebird.reject([
+          {
+            key: 'Question',
+            value: `Question not found for id: ${questionId}`
+          }
+        ])
+      }
+
+      let answerFindObj = {}
+      if (answerId) answerFindObj.id = answerId
+      if (answerKey) answerFindObj.answerKey = answerKey
+
+      const answer = await PredefinedAnswer.findOne(answerFindObj)
+      if (!answer) {
+        return Bluebird.reject([
+          {
+            key: 'PredefinedAnswer',
+            value: 'Predefined Answer not found with provided information'
+          }
+        ])
+      }
+
+      let deletedAnswerid = answer.id
+      await answer.destroy()
+
+      ctx.body = { data: { deletedAnswerid } }
     }
   },
   update: {
@@ -120,35 +172,45 @@ module.exports = (
         ])
       }
 
-      let updatedObj = {}
-      if (question) updatedObj.question = question
-      if (questionType) updatedObj.questionType = questionType
-      if (answerType) updatedObj.answerType = answerType
+      let questionUpdateObj = {}
+      if (question) questionUpdateObj.question = question
+      if (questionType) questionUpdateObj.questionType = questionType
+      if (answerType) questionUpdateObj.answerType = answerType
 
-      // Design Decision to make: whether endpoint to update PredefinedAnswers
-      // or destroy existing ones and create new entries?
       if (predefinedAnswers && Object.keys(predefinedAnswers).length) {
-        for (var answer in predefinedAnswers) {
-          await PredefinedAnswers.destroy({ where: { questionID: questionId } })
+        for (const answerKey in predefinedAnswers) {
+          const curPredefinedAnswer = await PredefinedAnswer.findOne({
+            where: { questionId, answerKey }
+          })
+          if (curPredefinedAnswer) {
+            let answerUpdateObj = {}
+            answerUpdateObj.answerValue = predefinedAnswers[answerKey].value
 
-          let predAnsObj = {}
-          predAnsObj.questionID = quest.id
-          predAnsObj.answerKey = answer
-          predAnsObj.answerValue = predefinedAnswers[answer]['value']
+            if ('skipQuestions' in predefinedAnswers[answerKey]) {
+              answerUpdateObj.skipQuestions =
+                predefinedAnswers[answerKey].skipQuestions
+            }
 
-          if ('skipQuestions' in predefinedAnswers[answer]) {
-            predAnsObj.skipQuestions =
-              predefinedAnswers[answer]['skipQuestions']
+            await curPredefinedAnswer.update(answerUpdateObj)
+          } else {
+            let answerCreateObj = {}
+            answerCreateObj.questionId = quest.id
+            answerCreateObj.answerKey = answerKey
+            answerCreateObj.answerValue = predefinedAnswers[answerKey].value
+
+            if ('skipQuestions' in predefinedAnswers[answerKey]) {
+              answerCreateObj.skipQuestions =
+                predefinedAnswers[answerKey].skipQuestions
+            }
+
+            await PredefinedAnswer.create(answerCreateObj)
           }
-
-          const predAns = await PredefinedAnswers.create(predAnsObj)
-          console.log(predAns.id)
         }
       }
 
-      await quest.update(updatedObj)
+      await quest.update(questionUpdateObj)
 
-      ctx.body = { data: updatedObj }
+      ctx.body = { data: questionUpdateObj }
     }
   },
 
@@ -184,7 +246,7 @@ module.exports = (
         ])
       }
 
-      if (question1.surveyID !== question2.surveyID) {
+      if (question1.surveyId !== question2.surveyId) {
         return Bluebird.reject([
           {
             key: 'survey mismatch',
@@ -197,7 +259,7 @@ module.exports = (
       await question1.update({ order: question2.order })
       await question2.update({ order: tempOrder })
 
-      ctx.body = { data: 'success' }
+      ctx.body = { data: { success: true } }
     }
   },
 
@@ -206,12 +268,15 @@ module.exports = (
       [
         'data',
         true,
-        [['predAnsId', true, 'integer'], ['skipQuestions', true, 'array']]
+        [
+          ['predefinedAnswerId', true, 'integer'],
+          ['skipQuestions', true, 'array']
+        ]
       ]
     ],
     async method (ctx) {
       const {
-        data: { predAnsId, skipQuestions }
+        data: { predefinedAnswerId, skipQuestions }
       } = ctx.request.body
 
       if (skipQuestions.length === 0) {
@@ -222,22 +287,21 @@ module.exports = (
           }
         ])
       }
-      const predAnsObj = await PredefinedAnswers.findOne({
-        where: { id: predAnsId }
+      const predefinedAnswer = await PredefinedAnswer.findOne({
+        where: { id: predefinedAnswerId }
       })
-      if (!predAnsObj) {
+      if (!predefinedAnswer) {
         return Bluebird.reject([
           {
             key: 'predefined_answer',
-            value: `Predefined answer not found for ID: ${predAnsId}`
+            value: `Predefined answer not found for ID: ${predefinedAnswerId}`
           }
         ])
       }
-      // No concating needed
-      // let curSkipQuestions = predAnsObj.skipQuestions.concat(skipQuestions)
-      await predAnsObj.update({ skipQuestions })
 
-      ctx.body = { data: 'successfully updated skipQuestions' }
+      await predefinedAnswer.update({ skipQuestions })
+
+      ctx.body = { data: { predefinedAnswerId } }
     }
   }
 })

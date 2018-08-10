@@ -22,7 +22,7 @@ module.exports = Sequelize => ({
       defaultValue: 0,
       field: 'question_order'
     },
-    surveyID: {
+    surveyId: {
       type: Sequelize.INTEGER,
       allowNull: false,
       field: 'survey_id',
@@ -37,7 +37,7 @@ module.exports = Sequelize => ({
   hooks: {
     beforeCreate: async question => {
       let order = await question.constructor.max('question_order', {
-        where: { surveyID: question.surveyID }
+        where: { surveyId: question.surveyId }
       })
 
       if (isNaN(order)) question.order = 1
@@ -46,7 +46,7 @@ module.exports = Sequelize => ({
   },
   associations: {
     // belongsTo: 'Survey',
-    hasMany: 'PredefinedAnswers',
+    hasMany: 'PredefinedAnswer',
     belongsToMany: { model: 'Participant', through: 'participant_answers' }
   },
   indexes: [{ fields: ['survey_id'] }]
