@@ -268,13 +268,13 @@ module.exports = (
       }
 
       const survey = await Survey.findOne({
-        where: { id: surveyId }
+        where: { id: surveyId, state: 'in_progress' }
       })
       if (!survey) {
         return Bluebird.reject([
           {
             key: 'Survey',
-            value: `Survey not found for ID: ${surveyId}`
+            value: `Active survey not found for ID: ${surveyId}`
           }
         ])
       }
