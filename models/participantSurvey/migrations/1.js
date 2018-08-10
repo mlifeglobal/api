@@ -19,6 +19,11 @@ module.exports = Sequelize => ({
           type: Sequelize.INTEGER,
           field: 'last_answered_question_id'
         },
+        skippedQuestions: {
+          type: Sequelize.ARRAY(Sequelize.INTEGER),
+          field: 'skipped_questions',
+          defaultValue: []
+        },
         participantId: {
           type: Sequelize.INTEGER,
           allowNull: false,

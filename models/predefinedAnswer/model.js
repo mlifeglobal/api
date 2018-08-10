@@ -1,19 +1,21 @@
 module.exports = Sequelize => ({
   attributes: {
+    answerKey: {
+      type: Sequelize.STRING,
+      field: 'answer_key',
+      allowNull: false
+    },
     answerValue: {
       type: Sequelize.STRING,
-      field: 'answer_value'
+      field: 'answer_value',
+      allowNull: false
     },
     skipQuestions: {
       type: Sequelize.ARRAY(Sequelize.INTEGER),
       field: 'skip_questions',
       defaultValue: []
     },
-    answerKey: {
-      type: Sequelize.STRING,
-      field: 'answer_key'
-    },
-    questionID: {
+    questionId: {
       type: Sequelize.INTEGER,
       allowNull: false,
       field: 'question_id',
@@ -25,5 +27,6 @@ module.exports = Sequelize => ({
       onUpdate: 'CASCADE'
     }
   },
+  associations: {},
   indexes: [{ fields: ['question_id'] }]
 })

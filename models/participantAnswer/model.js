@@ -1,8 +1,9 @@
 module.exports = Sequelize => ({
   attributes: {
     answers: {
-      type: Sequelize.JSON,
-      field: 'answers'
+      type: Sequelize.ARRAY(Sequelize.STRING),
+      field: 'answers',
+      defaultValue: []
     },
     surveyId: {
       type: Sequelize.INTEGER,

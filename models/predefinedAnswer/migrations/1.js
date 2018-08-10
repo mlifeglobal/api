@@ -11,18 +11,20 @@ module.exports = Sequelize => ({
         },
         answerKey: {
           type: Sequelize.STRING,
-          field: 'answer_key'
+          field: 'answer_key',
+          allowNull: false
         },
         answerValue: {
           type: Sequelize.STRING,
-          field: 'answer_value'
+          field: 'answer_value',
+          allowNull: false
         },
         skipQuestions: {
           type: Sequelize.ARRAY(Sequelize.INTEGER),
           field: 'skip_questions',
           defaultValue: []
         },
-        questionID: {
+        questionId: {
           type: Sequelize.INTEGER,
           allowNull: false,
           field: 'question_id',

@@ -5,7 +5,8 @@ module.exports = (
   Survey,
   ParticipantSurvey,
   Question,
-  ParticipantAnswer
+  ParticipantAnswer,
+  PredefinedAnswer
 ) => ({
   create: {
     schema: [['data', true, [['phone'], ['facebookId']]]],
@@ -141,16 +142,12 @@ module.exports = (
       [
         'data',
         true,
-        [
-          ['participantId', true, 'integer'],
-          ['surveyId', true, 'integer'],
-          ['lastQuestionId', 'integer']
-        ]
+        [['participantId', true, 'integer'], ['surveyId', true, 'integer']]
       ]
     ],
     async method (ctx) {
       const {
-        data: { participantId, surveyId, lastQuestionId: givenLastQuestionId }
+        data: { participantId, surveyId }
       } = ctx.request.body
 
       const participant = await Participant.findOne({
@@ -176,16 +173,16 @@ module.exports = (
       }
 
       let nextQuestionId
+      let lastQuestionId
+      let alreadySkipped = []
 
-      let lastQuestionId = givenLastQuestionId
-      if (!lastQuestionId) {
-        // Check ParticipantSurvey record
-        const participantSurvey = await ParticipantSurvey.findOne({
-          where: { participantId, surveyId }
-        })
-        if (participantSurvey) {
-          lastQuestionId = participantSurvey.lastAnsweredQuestionId
-        }
+      // Check ParticipantSurvey record
+      const participantSurvey = await ParticipantSurvey.findOne({
+        where: { participantId, surveyId }
+      })
+      if (participantSurvey) {
+        lastQuestionId = participantSurvey.lastAnsweredQuestionId
+        alreadySkipped = participantSurvey.skippedQuestions
       }
 
       if (lastQuestionId) {
@@ -204,6 +201,7 @@ module.exports = (
         // Get next question
         const nextQuestion = await Question.findOne({
           where: {
+            id: { [Sequelize.Op.notIn]: alreadySkipped },
             survey_id: surveyId,
             order: { [Sequelize.Op.gt]: lastQuestion.order }
           },
@@ -293,7 +291,6 @@ module.exports = (
         ])
       }
 
-      // Create ParticipantAnswer entry
       const participantAnswer = await ParticipantAnswer.findOne({
         where: { participantId, surveyId, questionId }
       })
@@ -305,10 +302,29 @@ module.exports = (
           }
         ])
       }
-      let answersObj = {}
+
+      // Check if provided question id is not in the list of skipped questions
+      let alreadySkipped = []
+      const participantSurvey = await ParticipantSurvey.findOne({
+        where: { participantId, surveyId }
+      })
+      if (participantSurvey) {
+        alreadySkipped = participantSurvey.skippedQuestions
+        if (alreadySkipped.includes(questionId)) {
+          return Bluebird.reject([
+            {
+              key: 'Question',
+              value: `Question ID: ${questionId} is in the list of skipped questions.`
+            }
+          ])
+        }
+      }
+
+      let answersToStore = []
+      let questionsToSkip = []
       let mcqAnswerNotMatching
       if (question.questionType === 'open') {
-        answersObj[answers[0]] = {}
+        answersToStore.push(answers[0])
       } else if (question.questionType === 'mcq') {
         if (question.answerType === 'single') {
           if (answers.length > 1) {
@@ -321,21 +337,26 @@ module.exports = (
               }
             ])
           }
-          if (Object.keys(question.predefinedAnswers).includes(answers[0])) {
-            console.log(`MCQ match: ${answers[0]}`)
-            answersObj[answers[0]] = {}
-          } else {
-            console.log(`MCQ dismatch: ${answers[0]}`)
-            mcqAnswerNotMatching = answers[0] || 'blank string'
-          }
-        } else if (question.answerType === 'multiple') {
-          for (const answer of answers) {
-            if (Object.keys(question.predefinedAnswers).includes(answer)) {
-              answersObj[answer] = {}
-            } else {
-              mcqAnswerNotMatching = answer || 'blank string'
-              break
+        }
+
+        // Check provided answers against predefined ones
+        for (const answer of answers) {
+          const predefinedAnswer = await PredefinedAnswer.findOne({
+            where: {
+              questionId,
+              [Sequelize.Op.or]: [
+                { answerValue: answer },
+                { answerKey: answer }
+              ]
             }
+          })
+          if (predefinedAnswer) {
+            answersToStore.push(answer)
+            questionsToSkip = questionsToSkip.concat(
+              predefinedAnswer.skipQuestions
+            )
+          } else {
+            mcqAnswerNotMatching = answer || 'blank string'
           }
         }
       }
@@ -349,16 +370,18 @@ module.exports = (
         ])
       }
 
+      // Create ParticipantAnswer record
       await ParticipantAnswer.create({
         participantId,
         surveyId,
         questionId,
-        answers: answersObj
+        answers: answersToStore
       })
 
       // Get next question
       const nextQuestion = await Question.findOne({
         where: {
+          id: { [Sequelize.Op.notIn]: alreadySkipped },
           survey_id: surveyId,
           order: { [Sequelize.Op.gt]: question.order }
         },
@@ -366,21 +389,20 @@ module.exports = (
       })
 
       // Update or Create ParticipantSurvey entry
-      const participantSurvey = await ParticipantSurvey.findOne({
-        where: { participantId, surveyId }
-      })
       if (participantSurvey) {
         const status = nextQuestion ? 'in_progress' : 'completed'
         await participantSurvey.update({
           status,
-          lastAnsweredQuestionId: question.id
+          lastAnsweredQuestionId: question.id,
+          skippedQuestions: alreadySkipped.concat(questionsToSkip)
         })
       } else {
         await ParticipantSurvey.create({
           participantId,
           surveyId,
           status: 'in_progress',
-          lastAnsweredQuestionId: question.id
+          lastAnsweredQuestionId: question.id,
+          skippedQuestions: questionsToSkip
         })
       }
 
