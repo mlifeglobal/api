@@ -1,5 +1,5 @@
 const koaStatic = require('koa-static')
-const { serve } = require('rocketstation-api')
+const { serve } = require('api-boilerplate')
 
 const port = process.env.port || 3000
 
