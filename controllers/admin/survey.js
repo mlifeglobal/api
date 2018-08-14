@@ -211,6 +211,13 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       ctx.body = { data: { surveyId: survey.id } }
     }
   },
+  validateOptInCode: {
+    schema: [['data', true, [['optInCode', true]]]],
+    async method (ctx) {
+      // TODO
+      ctx.body = {}
+    }
+  },
   changeState: {
     schema: [['data', true, [['surveyId', true, 'integer'], ['state', true]]]],
     async method (ctx) {

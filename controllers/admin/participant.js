@@ -9,22 +9,26 @@ module.exports = (
   PredefinedAnswer
 ) => ({
   create: {
-    schema: [['data', true, [['phone'], ['facebookId']]]],
+    schema: [['data', true, [['phone'], ['facebookId'], ['whatsappId']]]],
     async method (ctx) {
       const {
-        data: { phone, facebookId }
+        data: { phone, facebookId, whatsappId }
       } = ctx.request.body
 
-      if (!phone && !facebookId) {
+      if (!phone && !facebookId && !whatsappId) {
         return Bluebird.reject([
           {
             key: 'participant',
-            value: `Participant Create requires either unique phone or facebook id.`
+            value: `Participant Create requires either unique phone or facebook id or whatsapp id.`
           }
         ])
       }
 
-      const participant = await Participant.create({ phone, facebookId })
+      const participant = await Participant.create({
+        phone,
+        facebookId,
+        whatsappId
+      })
       ctx.body = { data: { participantId: participant.id } }
     },
     onError (error) {
@@ -61,6 +65,40 @@ module.exports = (
       await participant.destroy()
 
       ctx.body = { data: { participantId } }
+    }
+  },
+
+  activeSurvey: {
+    schema: [['data', true, [['participantId', true, 'integer']]]],
+    async method (ctx) {
+      const {
+        data: { participantId }
+      } = ctx.request.body
+
+      const participant = await Participant.findOne({
+        where: { id: participantId }
+      })
+      if (!participant) {
+        return Bluebird.reject([
+          {
+            key: 'participant',
+            value: `Participant not found for ID: ${participantId}`
+          }
+        ])
+      }
+
+      // Check for surveys in progress
+      const participantSurvey = await ParticipantSurvey.findOne({
+        where: { participantId, status: 'in_progress' }
+      })
+
+      const response = { data: {} }
+      if (participantSurvey) {
+        const { surveyId } = participantSurvey
+        response.data = { surveyId }
+      }
+
+      ctx.body = response
     }
   },
 

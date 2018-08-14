@@ -19,6 +19,12 @@ module.exports = Sequelize => ({
         allowNull: true,
         unique: true,
         field: 'facebook_id'
+      },
+      whatsappId: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        unique: true,
+        field: 'whatsapp_id'
       }
     })
   },
