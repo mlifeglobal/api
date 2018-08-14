@@ -390,7 +390,7 @@ module.exports = (
           })
           if (predefinedAnswer) {
             answersToStore.push(answer)
-            questionsToSkip = questionsToSkip.concat(
+            questionsToSkip = alreadySkipped.concat(
               predefinedAnswer.skipQuestions
             )
           } else {
@@ -419,7 +419,7 @@ module.exports = (
       // Get next question
       const nextQuestion = await Question.findOne({
         where: {
-          id: { [Sequelize.Op.notIn]: alreadySkipped },
+          id: { [Sequelize.Op.notIn]: questionsToSkip },
           survey_id: surveyId,
           order: { [Sequelize.Op.gt]: question.order }
         },
