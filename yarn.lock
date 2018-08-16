@@ -115,7 +115,7 @@ anymatch@^2.0.0:
     micromatch "^3.1.4"
     normalize-path "^2.1.1"
 
-api-boilerplate@1, api-boilerplate@^1.0.41:
+api-boilerplate@1:
   version "1.0.41"
   resolved "https://registry.yarnpkg.com/api-boilerplate/-/api-boilerplate-1.0.41.tgz#cfd451d515ce21aab3e719d072043f8abd5c8c0b"
   dependencies:
@@ -147,7 +147,7 @@ api-boilerplate@1, api-boilerplate@^1.0.41:
     sequelize "4"
     socket.io "2"
 
-api-db-cli@^0.1.0:
+api-db-cli@0:
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/api-db-cli/-/api-db-cli-0.1.0.tgz#7ba58900a3f5c03f286c15708da58d6ef2b42e55"
   dependencies:
