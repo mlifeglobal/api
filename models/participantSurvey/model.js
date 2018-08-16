@@ -2,8 +2,8 @@ module.exports = Sequelize => ({
   attributes: {
     status: {
       type: Sequelize.ENUM,
-      values: ['in_progress', 'completed'],
-      defaultValue: 'in_progress',
+      values: ['intro', 'initiated', 'in_progress', 'completed'],
+      defaultValue: 'intro',
       field: 'status'
     },
     lastAnsweredQuestionId: {
@@ -13,7 +13,7 @@ module.exports = Sequelize => ({
     skippedQuestions: {
       type: Sequelize.ARRAY(Sequelize.INTEGER),
       field: 'skipped_questions',
-      defaultValue: []
+      defaultValue: ['1']
     },
     surveyId: {
       type: Sequelize.INTEGER,

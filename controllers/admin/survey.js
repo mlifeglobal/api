@@ -211,11 +211,61 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       ctx.body = { data: { surveyId: survey.id } }
     }
   },
-  validateOptInCode: {
-    schema: [['data', true, [['optInCode', true]]]],
+  addInitCodes: {
+    schema: [
+      [
+        'data',
+        true,
+        [['surveyId', true, 'integer'], ['initCodes', true, 'array']]
+      ]
+    ],
     async method (ctx) {
-      // TODO
-      ctx.body = {}
+      const {
+        data: { surveyId, initCodes }
+      } = ctx.request.body
+
+      const survey = await Survey.findOne({ where: { id: surveyId } })
+      if (!survey) {
+        return Bluebird.reject([
+          { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
+        ])
+      }
+
+      await survey.update({
+        initCodes: lodash.union(survey.initCodes, initCodes)
+      })
+
+      ctx.body = { data: { surveyId: survey.id } }
+    }
+  },
+  removeInitCodes: {
+    schema: [
+      [
+        'data',
+        true,
+        [['surveyId', true, 'integer'], ['initCodes', true, 'array']]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { surveyId, initCodes }
+      } = ctx.request.body
+
+      const survey = await Survey.findOne({ where: { id: surveyId } })
+      if (!survey) {
+        return Bluebird.reject([
+          { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
+        ])
+      }
+
+      await survey.update({
+        initCodes: lodash.remove(
+          survey.initCodes,
+          code => !initCodes.includes(code)
+        )
+      })
+
+      ctx.body = { data: { surveyId: survey.id } }
     }
   },
   changeState: {

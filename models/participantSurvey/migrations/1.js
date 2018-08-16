@@ -11,7 +11,7 @@ module.exports = Sequelize => ({
         },
         status: {
           type: Sequelize.ENUM,
-          values: ['in_progress', 'completed'],
+          values: ['intro', 'initiated', 'in_progress', 'completed'],
           defaultValue: 'in_progress',
           field: 'status'
         },

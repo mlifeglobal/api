@@ -36,6 +36,11 @@ module.exports = Sequelize => ({
       defaultValue: [],
       field: 'opt_in_codes'
     },
+    initCodes: {
+      type: Sequelize.ARRAY(Sequelize.STRING),
+      defaultValue: [],
+      field: 'init_codes'
+    },
     platforms: {
       type: Sequelize.ARRAY(Sequelize.STRING),
       defaultValue: [],

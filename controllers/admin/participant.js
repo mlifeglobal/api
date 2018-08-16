@@ -24,11 +24,26 @@ module.exports = (
         ])
       }
 
-      const participant = await Participant.create({
-        phone,
-        facebookId,
-        whatsappId
-      })
+      const participantFindObj = {}
+      if (phone) {
+        participantFindObj.phone = phone
+      }
+      if (facebookId) {
+        participantFindObj.facebookId = facebookId
+      }
+      if (whatsappId) {
+        participantFindObj.whatsappId = whatsappId
+      }
+
+      let participant = await Participant.findOne({ where: participantFindObj })
+      if (!participant) {
+        participant = await Participant.create({
+          phone,
+          facebookId,
+          whatsappId
+        })
+      }
+
       ctx.body = { data: { participantId: participant.id } }
     },
     onError (error) {
@@ -68,11 +83,17 @@ module.exports = (
     }
   },
 
-  activeSurvey: {
-    schema: [['data', true, [['participantId', true, 'integer']]]],
+  introSurvey: {
+    schema: [
+      [
+        'data',
+        true,
+        [['participantId', true, 'integer'], ['surveyId', true, 'integer']]
+      ]
+    ],
     async method (ctx) {
       const {
-        data: { participantId }
+        data: { participantId, surveyId }
       } = ctx.request.body
 
       const participant = await Participant.findOne({
@@ -87,18 +108,22 @@ module.exports = (
         ])
       }
 
-      // Check for surveys in progress
-      const participantSurvey = await ParticipantSurvey.findOne({
-        where: { participantId, status: 'in_progress' }
-      })
-
-      const response = { data: {} }
-      if (participantSurvey) {
-        const { surveyId } = participantSurvey
-        response.data = { surveyId }
+      const survey = await Survey.findOne({ where: { id: surveyId } })
+      if (!survey) {
+        return Bluebird.reject([
+          {
+            key: 'survey',
+            value: `Survey not found for ID: ${surveyId}`
+          }
+        ])
       }
 
-      ctx.body = response
+      await ParticipantSurvey.create({
+        participantId,
+        surveyId
+      })
+
+      ctx.body = { data: { reply: survey.introString } }
     }
   },
 
@@ -127,13 +152,13 @@ module.exports = (
         ])
       }
 
-      // Check for surveys in progress
+      // Check for survey not completed
       const participantSurvey = await ParticipantSurvey.findOne({
-        where: { participantId, status: 'in_progress' }
+        where: { participantId, status: { [Sequelize.Op.ne]: 'completed' } }
       })
       if (participantSurvey) {
-        const { status, surveyId, lastQuestionId } = participantSurvey
-        ctx.body = { data: { status, surveyId, questionId: lastQuestionId } }
+        const { status, surveyId } = participantSurvey
+        ctx.body = { data: { status, surveyId } }
         return
       }
 
@@ -147,7 +172,7 @@ module.exports = (
         ])
       }
 
-      // Invalid opt in code
+      // Validate opt in code
       const whereClause = {
         state: 'in_progress',
         optInCodes: { [Sequelize.Op.contains]: [optInCode] }
@@ -155,14 +180,18 @@ module.exports = (
       if (platform) {
         whereClause.platforms = { [Sequelize.Op.contains]: [platform] }
       }
+      let dismatchReply
       const newSurvey = await Survey.findOne({ where: whereClause })
-      if (!newSurvey) {
-        return Bluebird.reject([
-          {
-            key: 'participant',
-            value: `Participant ${participantId} provided invalid opt in code that does not match with any live survey.`
-          }
-        ])
+      if (!newSurvey) { dismatchReply = 'No survey found matching the provided opt in code.' } else {
+        const participantSurvey = await ParticipantSurvey.findOne({
+          where: { participantId, surveyId: newSurvey.id, status: 'completed' }
+        })
+        if (participantSurvey) { dismatchReply = 'You have already filled this survey.' }
+      }
+      if (dismatchReply) {
+        // Invalid opt in code
+        ctx.body = { data: { status: 'dismatch', reply: dismatchReply } }
+        return
       }
 
       // Return new survey information
@@ -172,6 +201,66 @@ module.exports = (
           surveyId: newSurvey.id
         }
       }
+    }
+  },
+
+  validateInitCode: {
+    schema: [
+      [
+        'data',
+        true,
+        [
+          ['participantId', true, 'integer'],
+          ['surveyId', true, 'integer'],
+          ['initCode', true]
+        ]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { participantId, surveyId, initCode }
+      } = ctx.request.body
+
+      const participant = await Participant.findOne({
+        where: { id: participantId }
+      })
+      if (!participant) {
+        return Bluebird.reject([
+          {
+            key: 'participant',
+            value: `Participant not found for ID: ${participantId}`
+          }
+        ])
+      }
+
+      const survey = await Survey.findOne({ where: { id: surveyId } })
+      if (!survey) {
+        return Bluebird.reject([
+          {
+            key: 'survey',
+            value: `Survey not found for ID: ${surveyId}`
+          }
+        ])
+      }
+
+      const data = {}
+      if (!survey.initCodes.includes(initCode)) {
+        data.reply = 'Invalid initiation code provided for the survey'
+      } else {
+        const participantSurvey = await ParticipantSurvey.findOne({
+          where: { participantId, surveyId }
+        })
+        if (!participantSurvey) {
+          return Bluebird.reject({
+            key: 'ParticipantSurvey',
+            value: `ParticipantSurvey not found for participantId: ${participantId}, surveyId: ${surveyId}`
+          })
+        }
+
+        await participantSurvey.update({ status: 'initiated' })
+      }
+
+      ctx.body = { data }
     }
   },
 
@@ -395,17 +484,25 @@ module.exports = (
             )
           } else {
             mcqAnswerNotMatching = answer || 'blank string'
+            break
           }
         }
       }
 
       if (mcqAnswerNotMatching) {
-        return Bluebird.reject([
-          {
-            key: 'ParticipantAnswer',
-            value: `Provided Answer [${mcqAnswerNotMatching}] does not match with predefined answers`
+        let allPredefinedAnswers = await PredefinedAnswer.findAll({
+          where: { questionId }
+        })
+        allPredefinedAnswers = allPredefinedAnswers.map(
+          ({ answerKey, answerValue }) => `${answerKey}: ${answerValue}`
+        )
+        ctx.body = {
+          data: {
+            status: 'dismatch',
+            reply: `Provided Answer [${mcqAnswerNotMatching}] does not match with predefined answers [${allPredefinedAnswers.join()}]`
           }
-        ])
+        }
+        return
       }
 
       // Create ParticipantAnswer record
@@ -419,7 +516,7 @@ module.exports = (
       // Get next question
       const nextQuestion = await Question.findOne({
         where: {
-          id: { [Sequelize.Op.notIn]: questionsToSkip },
+          id: { [Sequelize.Op.notIn]: alreadySkipped.concat(questionsToSkip) },
           survey_id: surveyId,
           order: { [Sequelize.Op.gt]: question.order }
         },
@@ -448,7 +545,8 @@ module.exports = (
         data: {
           status: nextQuestion ? 'in_progress' : 'completed',
           answeredQuestionId: question.id,
-          nextQuestionId: nextQuestion ? nextQuestion.id : -1
+          nextQuestionId: nextQuestion ? nextQuestion.id : -1,
+          reply: nextQuestion ? undefined : survey.completionString
         }
       }
     }

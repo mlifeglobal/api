@@ -10,7 +10,7 @@ module.exports = (
   ParticipantAnswer,
   PredefinedAnswer
 ) => ({
-  receive: {
+  process: {
     schema: [
       [
         'data',
@@ -22,8 +22,6 @@ module.exports = (
       const {
         data: { platform, identifier, message }
       } = ctx.request.body
-
-      console.log(message)
 
       // Check against supported platforms
       if (!['sms', 'facebook', 'whatsapp'].includes(platform)) {
@@ -49,59 +47,139 @@ module.exports = (
           break
         case 'whatsapp':
           identifierColumn = 'whatsappId'
-          distributionPlatform = 'facebook'
+          distributionPlatform = 'whatsapp'
           break
         default:
           break
       }
 
-      console.log(distributionPlatform)
-
       // Get or create participant entry
-      const participantObj = {}
-      participantObj[identifierColumn] = identifier
-      let participant = await Participant.findOne({ where: participantObj })
-      if (!participant) {
-        participant = await Participant.create(participantObj)
-      }
-
-      // Fetch participant active survey
+      const participantData = {}
+      participantData[identifierColumn] = identifier
       const {
-        data: { surveyId }
+        data: { participantId }
       } = await request.post({
-        uri: `${config.constants.URL}/admin/participant-active-survey`,
+        uri: `${config.constants.URL}/admin/participant-create`,
         body: {
           secret: process.env.apiSecret,
-          data: { participantId: participant.id }
+          data: participantData
         },
         json: true
       })
 
-      if (surveyId) {
-        // Get the question from survey
-        await request.post({
-          uri: `${config.constants.URL}/admin/participant-get-question`,
+      // Fetch the survey
+      const {
+        data: {
+          status: participantSurveyStatus,
+          surveyId,
+          reply: participantSurveyReply
+        }
+      } = await request.post({
+        uri: `${config.constants.URL}/admin/participant-get-survey`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            participantId,
+            optInCode: message,
+            platform: distributionPlatform
+          }
+        },
+        json: true
+      })
+
+      if (participantSurveyStatus === 'dismatch') {
+        // Opt in code did not match
+        ctx.body = {
+          data: { reply: participantSurveyReply }
+        }
+        return
+      } else if (participantSurveyStatus === 'new') {
+        const {
+          data: { reply }
+        } = await request.post({
+          uri: `${config.constants.URL}/admin/participant-intro-survey`,
           body: {
             secret: process.env.apiSecret,
-            data: { participantId: participant.id, surveyId }
+            data: { participantId, surveyId }
           },
           json: true
         })
-      } else {
-        // Message should be opt in code for new survey
+        ctx.body = {
+          data: { reply }
+        }
+        return
+      } else if (participantSurveyStatus === 'intro') {
+        // Check message against predefined initiation_codes for survey
+        const {
+          data: { reply }
+        } = await request.post({
+          uri: `${config.constants.URL}/admin/participant-validate-init-code`,
+          body: {
+            secret: process.env.apiSecret,
+            data: { participantId, surveyId, initCode: message }
+          },
+          json: true
+        })
+
+        if (reply) {
+          ctx.body = {
+            data: { reply }
+          }
+          return
+        }
       }
 
-      ctx.body = { data: {} }
+      // Fetch the question
+      const {
+        data: { questionId }
+      } = await request.post({
+        uri: `${config.constants.URL}/admin/participant-get-question`,
+        body: {
+          secret: process.env.apiSecret,
+          data: { participantId, surveyId }
+        },
+        json: true
+      })
+
+      // Save message as answer to the question if not intro
+      let nextQuestionId = questionId
+      if (participantSurveyStatus !== 'intro') {
+        const {
+          data: { nextQuestionId: nextQuestionIdFromSaveAnswer, reply }
+        } = await request.post({
+          uri: `${config.constants.URL}/admin/participant-save-answer`,
+          body: {
+            secret: process.env.apiSecret,
+            data: { participantId, surveyId, questionId, answers: [message] }
+          },
+          json: true
+        })
+        nextQuestionId = nextQuestionIdFromSaveAnswer
+
+        if (reply) {
+          ctx.body = {
+            data: { reply }
+          }
+          return
+        }
+      }
+
+      // Format question as reply message
+      const {
+        data: { reply: formattedQuestion }
+      } = await request.post({
+        uri: `${config.constants.URL}/admin/question-format`,
+        body: {
+          secret: process.env.apiSecret,
+          data: { questionId: nextQuestionId }
+        },
+        json: true
+      })
+
+      ctx.body = { data: { reply: formattedQuestion } }
     },
     onError (error) {
       if (error instanceof Sequelize.UniqueConstraintError) {
-        const fields = Object.keys(error.fields)
-        const field = fields.includes('facebookId')
-          ? 'facebookId'
-          : fields.includes('phone')
-            ? 'phone'
-            : 'email'
-        return [{ key: field, value: `This ${field} is already taken.` }]
       }
     }
   }

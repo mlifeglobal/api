@@ -303,5 +303,35 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
 
       ctx.body = { data: { predefinedAnswerId } }
     }
+  },
+
+  format: {
+    schema: [['data', true, [['questionId', true, 'integer']]]],
+    async method (ctx) {
+      const {
+        data: { questionId }
+      } = ctx.request.body
+
+      const question = await Question.findOne({ where: { id: questionId } })
+      if (!question) {
+        return Bluebird.reject([
+          { key: 'question', value: `Question not found for ID: ${questionId}` }
+        ])
+      }
+
+      let reply = question.question
+      if (question.questionType === 'mcq') {
+        const predefinedAnswers = await PredefinedAnswer.findAll({
+          where: { questionId }
+        })
+        predefinedAnswers.forEach(({ answerKey, answerValue }) => {
+          reply += `\n${answerKey}: ${answerValue}`
+        })
+      }
+
+      ctx.body = {
+        data: { reply }
+      }
+    }
   }
 })
