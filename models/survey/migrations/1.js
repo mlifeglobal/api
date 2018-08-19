@@ -36,10 +36,23 @@ module.exports = Sequelize => ({
         defaultValue: [],
         field: 'opt_in_codes'
       },
+      initCodes: {
+        type: Sequelize.ARRAY(Sequelize.STRING),
+        defaultValue: ['1'],
+        field: 'init_codes'
+      },
       platforms: {
         type: Sequelize.ARRAY(Sequelize.STRING),
         defaultValue: [],
         field: 'platforms'
+      },
+      introString: {
+        type: Sequelize.STRING,
+        field: 'intro_string'
+      },
+      completionString: {
+        type: Sequelize.STRING,
+        field: 'completion_string'
       },
       createdDate: {
         type: Sequelize.DATE,

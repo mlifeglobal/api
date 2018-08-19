@@ -24,6 +24,12 @@ module.exports = Sequelize => ({
           field: 'skip_questions',
           defaultValue: []
         },
+        displayOrder: {
+          type: Sequelize.INTEGER,
+          autoIncrement: false,
+          defaultValue: 0,
+          field: 'display_order'
+        },
         questionId: {
           type: Sequelize.INTEGER,
           allowNull: false,

@@ -322,7 +322,8 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
       let reply = question.question
       if (question.questionType === 'mcq') {
         const predefinedAnswers = await PredefinedAnswer.findAll({
-          where: { questionId }
+          where: { questionId },
+          order: ['displayOrder']
         })
         predefinedAnswers.forEach(({ answerKey, answerValue }) => {
           reply += `\n${answerKey}: ${answerValue}`

@@ -6,7 +6,8 @@ module.exports = (
   ParticipantSurvey,
   Question,
   ParticipantAnswer,
-  PredefinedAnswer
+  PredefinedAnswer,
+  lodash
 ) => ({
   create: {
     schema: [['data', true, [['phone'], ['facebookId'], ['whatsappId']]]],
@@ -127,6 +128,48 @@ module.exports = (
     }
   },
 
+  resetSurvey: {
+    schema: [
+      [
+        'data',
+        true,
+        [['participantId', true, 'integer'], ['surveyId', true, 'integer']]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { participantId, surveyId }
+      } = ctx.request.body
+
+      const participant = await Participant.findOne({
+        where: { id: participantId }
+      })
+      if (!participant) {
+        return Bluebird.reject([
+          {
+            key: 'participant',
+            value: `Participant not found for ID: ${participantId}`
+          }
+        ])
+      }
+
+      const survey = await Survey.findOne({ where: { id: surveyId } })
+      if (!survey) {
+        return Bluebird.reject([
+          {
+            key: 'survey',
+            value: `Survey not found for ID: ${surveyId}`
+          }
+        ])
+      }
+
+      await ParticipantAnswer.destroy({ where: { participantId, surveyId } })
+      await ParticipantSurvey.destroy({ where: { participantId, surveyId } })
+
+      ctx.body = { data: { participantId, surveyId } }
+    }
+  },
+
   getSurvey: {
     schema: [
       [
@@ -182,11 +225,15 @@ module.exports = (
       }
       let dismatchReply
       const newSurvey = await Survey.findOne({ where: whereClause })
-      if (!newSurvey) { dismatchReply = 'No survey found matching the provided opt in code.' } else {
+      if (!newSurvey) {
+        dismatchReply = 'No survey found matching the provided opt in code.'
+      } else {
         const participantSurvey = await ParticipantSurvey.findOne({
           where: { participantId, surveyId: newSurvey.id, status: 'completed' }
         })
-        if (participantSurvey) { dismatchReply = 'You have already filled this survey.' }
+        if (participantSurvey) {
+          dismatchReply = 'You have already filled this survey.'
+        }
       }
       if (dismatchReply) {
         // Invalid opt in code
@@ -479,7 +526,8 @@ module.exports = (
           })
           if (predefinedAnswer) {
             answersToStore.push(answer)
-            questionsToSkip = alreadySkipped.concat(
+            questionsToSkip = lodash.union(
+              questionsToSkip,
               predefinedAnswer.skipQuestions
             )
           } else {
@@ -491,7 +539,8 @@ module.exports = (
 
       if (mcqAnswerNotMatching) {
         let allPredefinedAnswers = await PredefinedAnswer.findAll({
-          where: { questionId }
+          where: { questionId },
+          order: ['displayOrder']
         })
         allPredefinedAnswers = allPredefinedAnswers.map(
           ({ answerKey, answerValue }) => `${answerKey}: ${answerValue}`
@@ -499,7 +548,9 @@ module.exports = (
         ctx.body = {
           data: {
             status: 'dismatch',
-            reply: `Provided Answer [${mcqAnswerNotMatching}] does not match with predefined answers [${allPredefinedAnswers.join()}]`
+            reply: `Provided Answer [${mcqAnswerNotMatching}] does not match with predefined answers [${allPredefinedAnswers.join(
+              ', '
+            )}]`
           }
         }
         return
@@ -513,10 +564,13 @@ module.exports = (
         answers: answersToStore
       })
 
+      // Merge new skip questions with already skipped ones
+      questionsToSkip = lodash.union(questionsToSkip, alreadySkipped)
+
       // Get next question
       const nextQuestion = await Question.findOne({
         where: {
-          id: { [Sequelize.Op.notIn]: alreadySkipped.concat(questionsToSkip) },
+          id: { [Sequelize.Op.notIn]: questionsToSkip },
           survey_id: surveyId,
           order: { [Sequelize.Op.gt]: question.order }
         },
@@ -526,11 +580,16 @@ module.exports = (
       // Update or Create ParticipantSurvey entry
       if (participantSurvey) {
         const status = nextQuestion ? 'in_progress' : 'completed'
+
         await participantSurvey.update({
           status,
           lastAnsweredQuestionId: question.id,
-          skippedQuestions: alreadySkipped.concat(questionsToSkip)
+          skippedQuestions: questionsToSkip
         })
+
+        if (status === 'completed') {
+          await survey.update({ completedCount: survey.completedCount + 1 })
+        }
       } else {
         await ParticipantSurvey.create({
           participantId,

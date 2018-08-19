@@ -1,15 +1,4 @@
-module.exports = (
-  request,
-  config,
-  Sequelize,
-  Bluebird,
-  Participant,
-  Survey,
-  ParticipantSurvey,
-  Question,
-  ParticipantAnswer,
-  PredefinedAnswer
-) => ({
+module.exports = (request, config, Sequelize, Bluebird, Message) => ({
   process: {
     schema: [
       [
@@ -67,6 +56,9 @@ module.exports = (
         json: true
       })
 
+      // Create Message entry
+      await Message.create({ message, platform, participantID: participantId })
+
       // Fetch the survey
       const {
         data: {
@@ -88,6 +80,13 @@ module.exports = (
       })
 
       if (participantSurveyStatus === 'dismatch') {
+        await Message.create({
+          message: participantSurveyReply,
+          platform,
+          participantID: participantId,
+          direction: 'outgoing'
+        })
+
         // Opt in code did not match
         ctx.body = {
           data: { reply: participantSurveyReply }
@@ -103,6 +102,12 @@ module.exports = (
             data: { participantId, surveyId }
           },
           json: true
+        })
+        await Message.create({
+          message: reply,
+          platform,
+          participantID: participantId,
+          direction: 'outgoing'
         })
         ctx.body = {
           data: { reply }
@@ -122,6 +127,12 @@ module.exports = (
         })
 
         if (reply) {
+          await Message.create({
+            message: reply,
+            platform,
+            participantID: participantId,
+            direction: 'outgoing'
+          })
           ctx.body = {
             data: { reply }
           }
@@ -157,6 +168,12 @@ module.exports = (
         nextQuestionId = nextQuestionIdFromSaveAnswer
 
         if (reply) {
+          await Message.create({
+            message: reply,
+            platform,
+            participantID: participantId,
+            direction: 'outgoing'
+          })
           ctx.body = {
             data: { reply }
           }
@@ -176,6 +193,12 @@ module.exports = (
         json: true
       })
 
+      await Message.create({
+        message: formattedQuestion,
+        platform,
+        participantID: participantId,
+        direction: 'outgoing'
+      })
       ctx.body = { data: { reply: formattedQuestion } }
     },
     onError (error) {

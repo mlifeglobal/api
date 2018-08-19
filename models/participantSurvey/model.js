@@ -13,7 +13,7 @@ module.exports = Sequelize => ({
     skippedQuestions: {
       type: Sequelize.ARRAY(Sequelize.INTEGER),
       field: 'skipped_questions',
-      defaultValue: ['1']
+      defaultValue: []
     },
     surveyId: {
       type: Sequelize.INTEGER,

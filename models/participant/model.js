@@ -20,6 +20,7 @@ module.exports = Sequelize => ({
     }
   },
   associations: {
+    hasMany: 'Message',
     belongsToMany: [
       { model: 'Survey', through: 'participant_surveys' },
       { model: 'Question', through: 'participant_answers' }

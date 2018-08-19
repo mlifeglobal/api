@@ -15,6 +15,12 @@ module.exports = Sequelize => ({
       field: 'skip_questions',
       defaultValue: []
     },
+    displayOrder: {
+      type: Sequelize.INTEGER,
+      autoIncrement: false,
+      defaultValue: 0,
+      field: 'display_order'
+    },
     questionId: {
       type: Sequelize.INTEGER,
       allowNull: false,
@@ -27,6 +33,15 @@ module.exports = Sequelize => ({
       onUpdate: 'CASCADE'
     }
   },
-  associations: {},
+  hooks: {
+    beforeCreate: async answer => {
+      let displayOrder = await answer.constructor.max('display_order', {
+        where: { questionId: answer.questionId }
+      })
+
+      if (isNaN(displayOrder)) answer.displayOrder = 1
+      else answer.displayOrder = displayOrder + 1
+    }
+  },
   indexes: [{ fields: ['question_id'] }]
 })

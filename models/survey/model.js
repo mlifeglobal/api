@@ -38,7 +38,7 @@ module.exports = Sequelize => ({
     },
     initCodes: {
       type: Sequelize.ARRAY(Sequelize.STRING),
-      defaultValue: [],
+      defaultValue: ['1'],
       field: 'init_codes'
     },
     platforms: {
