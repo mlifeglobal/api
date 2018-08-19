@@ -20,7 +20,8 @@
     "koa-static": "4",
     "node-schedule": "^1.2.4",
     "request": "2",
-    "request-promise": "4"
+    "request-promise": "4",
+    "twilio": "^3.19.1"
   },
   "devDependencies": {
     "eslint": "4.11.0",
