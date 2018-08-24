@@ -17,6 +17,11 @@ module.exports = Sequelize => ({
       defaultValue: 'incoming',
       field: 'direction'
     },
+    messageIdentifier: {
+      type: Sequelize.STRING,
+      field: 'message_identifier',
+      allowNull: true
+    },
     participantID: {
       type: Sequelize.INTEGER,
       allowNull: false,

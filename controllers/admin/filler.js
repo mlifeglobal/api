@@ -4,12 +4,17 @@ module.exports = (request, config, Sequelize, Bluebird, Message) => ({
       [
         'data',
         true,
-        [['platform', true], ['identifier', true], ['message', true]]
+        [
+          ['platform', true],
+          ['identifier', true],
+          ['message', true],
+          ['messageIdentifier', 'string']
+        ]
       ]
     ],
     async method (ctx) {
       const {
-        data: { platform, identifier, message }
+        data: { platform, identifier, message, messageIdentifier }
       } = ctx.request.body
 
       // Check against supported platforms
@@ -57,7 +62,12 @@ module.exports = (request, config, Sequelize, Bluebird, Message) => ({
       })
 
       // Create Message entry
-      await Message.create({ message, platform, participantID: participantId })
+      await Message.create({
+        message,
+        platform,
+        participantID: participantId,
+        messageIdentifier
+      })
 
       // Fetch the survey
       const {
