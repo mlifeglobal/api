@@ -289,5 +289,15 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       if (error instanceof Sequelize.DatabaseError) {
       }
     }
+  },
+  getAll: {
+    async method (ctx) {
+      const surveys = await Survey.findAll({
+        where: { state: { [Sequelize.Op.ne]: 'completed' } },
+        raw: true
+      })
+
+      ctx.body = { data: { surveys } }
+    }
   }
 })
