@@ -304,6 +304,58 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
       ctx.body = { data: { predefinedAnswerId } }
     }
   },
+  setBranchSlack: {
+    schema: [
+      [
+        'data',
+        true,
+        [
+          ['questionId', true, 'integer'],
+          ['option', true],
+          ['skipQuestions', true, 'array']
+        ]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { questionId, skipQuestions, option }
+      } = ctx.request.body
+
+      if (skipQuestions.length === 0) {
+        return Bluebird.reject([
+          {
+            key: 'skipQuestions',
+            value: `No skip question ids have been provided`
+          }
+        ])
+      }
+      const predAnswers = await PredefinedAnswer.findAll({
+        where: { questionId: questionId },
+        raw: true
+      })
+      if (!predAnswers) {
+        return Bluebird.reject([
+          {
+            key: 'predefined_answer',
+            value: `Predefined answer not found for question ID: ${questionId}`
+          }
+        ])
+      }
+      let found = false
+      for (var ans of predAnswers) {
+        if (ans['answerKey'] == option) {
+          found = true
+          const predefinedAnswer = await PredefinedAnswer.findOne({
+            where: { id: ans['id'] }
+          })
+
+          await predefinedAnswer.update({ skipQuestions })
+          break
+        }
+      }
+      ctx.body = found ? { data: 'Success' } : { error: 'No option found' }
+    }
+  },
 
   format: {
     schema: [['data', true, [['questionId', true, 'integer']]]],
@@ -332,6 +384,37 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
 
       ctx.body = {
         data: { reply }
+      }
+    }
+  },
+  getPredefAnswers: {
+    schema: [['data', true, [['questionId', true, 'integer']]]],
+
+    async method (ctx) {
+      const {
+        data: { questionId }
+      } = ctx.request.body
+
+      const question = await Question.findOne({ where: { id: questionId } })
+      if (!question) {
+        return Bluebird.reject([
+          { key: 'question', value: `Question not found for ID: ${questionId}` }
+        ])
+      }
+
+      let answers = {}
+      if (question.questionType === 'mcq') {
+        const predefinedAnswers = await PredefinedAnswer.findAll({
+          where: { questionId },
+          order: ['displayOrder']
+        })
+        predefinedAnswers.forEach(({ answerKey, answerValue }) => {
+          answers[answerKey] = { value: answerValue }
+        })
+      }
+
+      ctx.body = {
+        data: { answers }
       }
     }
   }

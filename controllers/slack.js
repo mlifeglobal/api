@@ -1,4 +1,4 @@
-module.exports = (request, config, Bluebird, qs, axios) => ({
+module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
   createSurvey: {
     async method (ctx) {
       const { token, text, trigger_id } = ctx.request.body
@@ -138,11 +138,56 @@ module.exports = (request, config, Bluebird, qs, axios) => ({
               label: 'Predefined Answers',
               type: 'textarea',
               name: 'predefinedAnswers',
-              optional: true
+              optional: true,
+              placeholder:
+                '{"a": { "value": option a, skipQuestions:[question IDs] },\n "b": { "value": option b },\n "c": { "value": option c }}'
             }
           ]
         })
       }
+      const response = await axios.post(
+        'https://slack.com/api/dialog.open',
+        qs.stringify(dialogObj)
+      )
+      ctx.body = ''
+    }
+  },
+  setBranch: {
+    async method (ctx) {
+      const { token, text, trigger_id } = ctx.request.body
+
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+      const dialogObj = {
+        token: process.env.slackAccessToken,
+        trigger_id: trigger_id,
+        dialog: JSON.stringify({
+          title: 'Set Branch ',
+          callback_id: 'question-set-branch-slack',
+          submit_label: 'Submit',
+          elements: [
+            {
+              label: 'Question ID',
+              type: 'text',
+              name: 'questionId'
+            },
+            {
+              label: 'Option',
+              type: 'text',
+              name: 'option'
+            },
+            {
+              label: 'Questions to Skip',
+              type: 'text',
+              name: 'skipQuestions'
+            }
+          ]
+        })
+      }
+      // open the dialog by calling dialogs.open method and sending the payload
       const response = await axios.post(
         'https://slack.com/api/dialog.open',
         qs.stringify(dialogObj)
@@ -206,21 +251,268 @@ module.exports = (request, config, Bluebird, qs, axios) => ({
       ctx.body = ''
     }
   },
+  updateSurvey: {
+    async method (ctx) {
+      const { token, text, trigger_id } = ctx.request.body
+
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+
+      const survey = await Survey.findOne({ where: { id: text } })
+      if (!survey) {
+        return Bluebird.reject([{ key: 'Error', value: `Survey not found` }])
+      }
+      const dialogObj = {
+        token: process.env.slackAccessToken,
+        trigger_id: trigger_id,
+        dialog: JSON.stringify({
+          title: 'Update a Survey',
+          callback_id: 'survey-update',
+          submit_label: 'Submit',
+          elements: [
+            {
+              label: 'Survey ID',
+              type: 'text',
+              name: 'surveyId',
+              hint: 'do not touch',
+              value: survey.id
+            },
+            {
+              label: 'Name',
+              type: 'text',
+              name: 'name',
+              hint: 'survey name',
+              value: survey.name
+            },
+            {
+              label: 'Description',
+              type: 'textarea',
+              name: 'description',
+              value: survey.description
+            },
+            {
+              label: 'Intro String',
+              type: 'textarea',
+              name: 'introString',
+              value: survey.introString
+            },
+            {
+              label: 'Completion String',
+              type: 'textarea',
+              name: 'completionString',
+              value: survey.completionString
+            }
+          ]
+        })
+      }
+      // open the dialog by calling dialogs.open method and sending the payload
+      const response = await axios.post(
+        'https://slack.com/api/dialog.open',
+        qs.stringify(dialogObj)
+      )
+      ctx.body = ''
+    }
+  },
+
+  updateSurveyPublish: {
+    async method (ctx) {
+      const { token, text, trigger_id } = ctx.request.body
+
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+
+      const survey = await Survey.findOne({ where: { id: text } })
+      if (!survey) {
+        return Bluebird.reject([{ key: 'Error', value: `Survey not found` }])
+      }
+
+      const dialogObj = {
+        token: process.env.slackAccessToken,
+        trigger_id: trigger_id,
+        dialog: JSON.stringify({
+          title: 'Update a Survey',
+          callback_id: 'survey-update',
+          submit_label: 'Submit',
+          elements: [
+            {
+              label: 'Survey ID',
+              type: 'text',
+              name: 'surveyId',
+              hint: 'do not touch',
+              value: survey.id
+            },
+            {
+              label: 'Platforms',
+              type: 'text',
+              name: 'platforms',
+              hint: 'survey platforms',
+              value: survey.platforms.join()
+            },
+            {
+              label: 'Opt-in Codes',
+              type: 'text',
+              name: 'optInCodes',
+              value: survey.optInCodes.join()
+            },
+            {
+              label: 'Init Codes',
+              type: 'text',
+              name: 'initCodes',
+              value: survey.initCodes.join()
+            },
+            {
+              label: 'Incentive',
+              type: 'text',
+              name: 'incentive',
+              value: survey.incentive
+            }
+          ]
+        })
+      }
+      // open the dialog by calling dialogs.open method and sending the payload
+      const response = await axios.post(
+        'https://slack.com/api/dialog.open',
+        qs.stringify(dialogObj)
+      )
+      ctx.body = ''
+    }
+  },
+  updateQuestion: {
+    async method (ctx) {
+      const { token, text, trigger_id } = ctx.request.body
+
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+
+      const question = await Question.findOne({ where: { id: text } })
+      if (!question) {
+        return Bluebird.reject([{ key: 'Error', value: `Question not found` }])
+      }
+      const {
+        data: { answers }
+      } = await request.post({
+        uri: `${config.constants.URL}/admin/question-get-predef-answers`,
+        body: {
+          secret: process.env.apiSecret,
+          data: { questionId: question.id }
+        },
+        json: true
+      })
+      console.log(answers)
+
+      const dialogObj = {
+        token: process.env.slackAccessToken,
+        trigger_id: trigger_id,
+        dialog: JSON.stringify({
+          title: 'Update Question',
+          callback_id: 'question-update',
+          submit_label: 'Submit',
+          elements: [
+            {
+              label: 'Question Id',
+              type: 'text',
+              name: 'questionId',
+              value: question.id,
+              hint: 'do not change'
+            },
+            {
+              label: 'Question',
+              type: 'textarea',
+              name: 'question',
+              value: question.question
+            },
+            {
+              label: 'Question Type',
+              type: 'select',
+              name: 'questionType',
+              value: question.questionType,
+              options: [
+                {
+                  label: 'Multiple Choice',
+                  value: 'mcq'
+                },
+                {
+                  label: 'Open Question',
+                  value: 'open'
+                },
+                {
+                  label: 'Matrix',
+                  value: 'matrix'
+                }
+              ]
+            },
+            {
+              label: 'Answer Type',
+              type: 'select',
+              name: 'answerType',
+              value: question.answerType,
+              options: [
+                {
+                  label: 'Multiple',
+                  value: 'multiple'
+                },
+                {
+                  label: 'Single',
+                  value: 'single'
+                }
+              ]
+            },
+            {
+              label: 'Predefined Answers',
+              type: 'textarea',
+              name: 'predefinedAnswers',
+              optional: true,
+              value: JSON.stringify(answers),
+              placeholder:
+                '{"a": { "value": option a, skipQuestions:[question IDs] },\n "b": { "value": option b },\n "c": { "value": option c }}'
+            }
+          ]
+        })
+      }
+      const response = await axios.post(
+        'https://slack.com/api/dialog.open',
+        qs.stringify(dialogObj)
+      )
+      ctx.body = ''
+    }
+  },
   commandResponse: {
     async method (ctx) {
       const body = JSON.parse(ctx.request.body.payload)
 
+      let arrayObjs = ['skipQuestions', 'platforms', 'optInCodes', 'initCodes']
+
       Object.keys(body.submission).forEach(k => {
         // Delete null elements
-        if (!body.submission[k]) {
+        if (!body.submission[k] || body.submission[k] === undefined) {
           delete body.submission[k]
         }
         // Convert strings to int
         if (!isNaN(+body.submission[k])) {
           body.submission[k] = +body.submission[k]
         }
+        // Convert string to json object
+        if (
+          'predefinedAnswers' in body.submission &&
+          k === 'predefinedAnswers'
+        ) {
+          body.submission[k] = JSON.parse(body.submission[k])
+        }
+
+        if (arrayObjs.indexOf(k) > -1) {
+          body.submission[k] = body.submission[k].split(',')
+          console.log(body.submission[k])
+        }
       })
-      console.log(body.submission)
 
       const response = await request.post({
         uri: `${config.constants.URL}/admin/${body.callback_id}`,

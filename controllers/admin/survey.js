@@ -59,7 +59,10 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           ['description'],
           ['introString'],
           ['completionString'],
-          ['incentive', 'integer']
+          ['incentive', 'integer'],
+          ['optInCodes', 'array'],
+          ['initCodes', 'array'],
+          ['platforms', 'array']
         ]
       ]
     ],
@@ -71,7 +74,10 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           description,
           introString,
           completionString,
-          incentive
+          incentive,
+          optInCodes,
+          initCodes,
+          platforms
         }
       } = ctx.request.body
 
@@ -88,6 +94,9 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       if (introString) updateObj.introString = introString
       if (completionString) updateObj.completionString = completionString
       if (incentive) updateObj.incentive = incentive
+      if (optInCodes) updateObj.optInCodes = optInCodes
+      if (initCodes) updateObj.initCodes = initCodes
+      if (platforms) updateObj.platforms = platforms
 
       await survey.update(updateObj)
 
