@@ -1,4 +1,4 @@
-module.exports = (request, config) => ({
+module.exports = (request, config, africasTalking) => ({
   receive: {
     async method (ctx) {
       const {
@@ -30,7 +30,7 @@ module.exports = (request, config) => ({
           body: {
             data: {
               phone,
-              message
+              message: reply
             }
           },
           json: true
@@ -48,19 +48,32 @@ module.exports = (request, config) => ({
         data: { message, phone }
       } = ctx.request.body
 
-      const res = await request.post({
-        uri: `${config.constants.AFRICAS_TALKING_API}/messaging`,
-        headers: {
-          Accept: 'application/json',
-          apikey: process.env.africasTalkingToken
-        },
-        formData: {
-          username: process.env.africasTalkingUsername,
-          from: process.env.africasTalkingShortcode,
-          to: phone,
-          message
-        },
-        json: true
+      const res = await africasTalking.SMS.send({
+        from: process.env.africasTalkingShortcode,
+        to: phone,
+        message,
+        enqueue: true
+      })
+      console.log(res)
+
+      ctx.body = {}
+    }
+  },
+
+  sendAirtime: {
+    schema: [['data', true, [['phone', true], ['amount', true]]]],
+    async method (ctx) {
+      const {
+        data: { amount, phone }
+      } = ctx.request.body
+
+      const res = await africasTalking.AIRTIME.send({
+        recipients: [
+          {
+            phoneNumber: phone,
+            amount
+          }
+        ]
       })
       console.log(res)
 

@@ -4,9 +4,24 @@ const JWT = require('jsonwebtoken')
 const request = require('request-promise')
 const scheduler = require('node-schedule')
 const Twilio = require('twilio')
+const AfricasTalking = require('africastalking')
 const qs = require('querystring')
 const axios = require('axios')
 
 const twilio = new Twilio(process.env.twilioSID, process.env.twilioToken)
+const africasTalking = AfricasTalking({
+  apiKey: process.env.africasTalkingToken,
+  username: process.env.africasTalkingUsername
+})
 
-module.exports = { lodash, bcrypt, JWT, request, scheduler, twilio, qs, axios }
+module.exports = {
+  lodash,
+  bcrypt,
+  JWT,
+  request,
+  scheduler,
+  twilio,
+  africasTalking,
+  qs,
+  axios
+}
