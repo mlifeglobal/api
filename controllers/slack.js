@@ -251,6 +251,62 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
       ctx.body = ''
     }
   },
+  unpublishSurvey: {
+    async method (ctx) {
+      const { token, text, trigger_id } = ctx.request.body
+
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+
+      const {
+        data: { surveys }
+      } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-all`,
+        body: {
+          secret: process.env.apiSecret
+        },
+        json: true
+      })
+
+      let optionsObj = []
+      for (var survey of surveys) {
+        optionsObj.push({ label: survey.name, value: survey.id })
+      }
+
+      const dialogObj = {
+        token: process.env.slackAccessToken,
+        trigger_id: trigger_id,
+        dialog: JSON.stringify({
+          title: 'Publish Survey',
+          callback_id: 'survey-unpublish',
+          submit_label: 'Submit',
+          elements: [
+            {
+              label: 'Surveys',
+              type: 'select',
+              subtype: 'number',
+              name: 'surveyId',
+              options: optionsObj
+            },
+            {
+              label: 'Platforms',
+              name: 'platforms',
+              type: 'textarea'
+            }
+          ]
+        })
+      }
+
+      const response = await axios.post(
+        'https://slack.com/api/dialog.open',
+        qs.stringify(dialogObj)
+      )
+      ctx.body = ''
+    }
+  },
   updateSurvey: {
     async method (ctx) {
       const { token, text, trigger_id } = ctx.request.body
@@ -352,25 +408,32 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
               type: 'text',
               name: 'platforms',
               hint: 'survey platforms',
-              value: survey.platforms.join()
+              value: survey.platforms.join(),
+              optional: true
             },
             {
               label: 'Opt-in Codes',
               type: 'text',
               name: 'optInCodes',
-              value: survey.optInCodes.join()
+              value: survey.optInCodes.join(),
+              optional: true
+
             },
             {
               label: 'Init Codes',
               type: 'text',
               name: 'initCodes',
-              value: survey.initCodes.join()
+              value: survey.initCodes.join(),
+              optional: true
+
             },
             {
               label: 'Incentive',
               type: 'text',
               name: 'incentive',
-              value: survey.incentive
+              value: survey.incentive,
+              optional: true
+
             }
           ]
         })
@@ -496,10 +559,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         if (!body.submission[k] || body.submission[k] === undefined) {
           delete body.submission[k]
         }
-        // Convert strings to int
-        if (!isNaN(+body.submission[k])) {
-          body.submission[k] = +body.submission[k]
-        }
         // Convert string to json object
         if (
           'predefinedAnswers' in body.submission &&
@@ -508,9 +567,14 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
           body.submission[k] = JSON.parse(body.submission[k])
         }
 
-        if (arrayObjs.indexOf(k) > -1) {
+        if (arrayObjs.indexOf(k) > -1 && body.submission[k] !== undefined) {
+          console.log(body.submission[k])
           body.submission[k] = body.submission[k].split(',')
           console.log(body.submission[k])
+        } 
+        // Convert strings to int
+        else if (!isNaN(+body.submission[k])) {
+          body.submission[k] = +body.submission[k]
         }
       })
 
@@ -522,7 +586,17 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         },
         json: true
       })
-      console.log(response)
+      console.log(response.data)
+      const obj = {
+        token: process.env.slackAccessToken,
+        channel: process.env.slackBot,
+        text: JSON.stringify(response.data)
+      }
+
+      await axios.post(
+        'https://slack.com/api/chat.postMessage',
+        qs.stringify(obj)
+      )
       ctx.body = ''
     }
   }

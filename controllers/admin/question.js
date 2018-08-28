@@ -61,7 +61,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
           await PredefinedAnswer.create(answerCreateObj)
         }
       }
-      ctx.body = { data: { questionId: quest.id } }
+      ctx.body = { data: `Question with id ${quest.id} has been added to survey  ${surveyId}` }
     }
   },
   delete: {
@@ -210,7 +210,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
 
       await quest.update(questionUpdateObj)
 
-      ctx.body = { data: questionUpdateObj }
+      ctx.body = { data: `Question has been successfully updated for ID: ${questionId}` }
     }
   },
 
@@ -353,7 +353,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
           break
         }
       }
-      ctx.body = found ? { data: 'Success' } : { error: 'No option found' }
+      ctx.body = found ? { data: 'Branch succesfully setted' } : { data: 'No option found' }
     }
   },
 

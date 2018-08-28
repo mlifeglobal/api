@@ -26,7 +26,9 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         incentive
       })
 
-      ctx.body = { data: { surveyId: survey.id } }
+      ctx.body = {
+        data: `Survey has succesfully created for id: ${survey.id}`
+      }
     }
   },
   delete: {
@@ -45,7 +47,9 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
 
       await survey.destroy()
 
-      ctx.body = { data: { surveyId } }
+      ctx.body = {
+        data: `Survey has succesfully deleted for id: ${survey.id}`
+      }
     }
   },
   update: {
@@ -100,7 +104,9 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
 
       await survey.update(updateObj)
 
-      ctx.body = { data: { surveyId: survey.id } }
+      ctx.body = {
+        data: `Survey has succesfully updated for id: ${survey.id}`
+      }
     }
   },
   publish: {
@@ -128,7 +134,9 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         state: 'in_progress'
       })
 
-      ctx.body = { data: { surveyId: survey.id } }
+      ctx.body = {
+        data: `Survey has succesfully published for id: ${survey.id}`
+      }
     }
   },
   unpublish: {
@@ -160,7 +168,9 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         state: updatedPlatforms.length ? 'in_progress' : 'uninitiated'
       })
 
-      ctx.body = { data: { surveyId: survey.id } }
+      ctx.body = {
+        data: `Survey has succesfully unpublished from ${platforms} for id: ${survey.id}`
+      }
     }
   },
   addOptInCodes: {
@@ -187,7 +197,9 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         optInCodes: lodash.union(survey.optInCodes, optInCodes)
       })
 
-      ctx.body = { data: { surveyId: survey.id } }
+      ctx.body = {
+        data: `Opt in codes has been added for id: ${survey.id}`
+      }
     }
   },
   removeOptInCodes: {
@@ -217,7 +229,9 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         )
       })
 
-      ctx.body = { data: { surveyId: survey.id } }
+      ctx.body = {
+        data: `Opt in codes removed from survey : ${survey.id}`
+      }
     }
   },
   addInitCodes: {
@@ -244,7 +258,9 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         initCodes: lodash.union(survey.initCodes, initCodes)
       })
 
-      ctx.body = { data: { surveyId: survey.id } }
+      ctx.body = {
+        data: `Init codes have been added to survey : ${survey.id}`
+      }
     }
   },
   removeInitCodes: {
@@ -274,7 +290,9 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         )
       })
 
-      ctx.body = { data: { surveyId: survey.id } }
+      ctx.body = {
+        data: `Init codes have been removed from survey:  ${survey.id}`
+      }
     }
   },
   changeState: {
@@ -292,7 +310,9 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       }
 
       survey.update({ state })
-      ctx.body = { data: { surveyId } }
+      ctx.body = {
+        data: `Survey state has succesfully changed for id: ${survey.id}`
+      }
     },
     onError (error) {
       if (error instanceof Sequelize.DatabaseError) {
