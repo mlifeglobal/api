@@ -7,6 +7,8 @@ const Twilio = require('twilio')
 const AfricasTalking = require('africastalking')
 const qs = require('querystring')
 const axios = require('axios')
+const asyncBusboy = require('async-busboy')
+var csv = require('csvtojson')
 
 const twilio = new Twilio(process.env.twilioSID, process.env.twilioToken)
 const africasTalking = AfricasTalking({
@@ -23,5 +25,7 @@ module.exports = {
   twilio,
   africasTalking,
   qs,
-  axios
+  axios,
+  asyncBusboy,
+  csv
 }
