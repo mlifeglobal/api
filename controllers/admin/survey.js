@@ -27,7 +27,8 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       })
 
       ctx.body = {
-        data: `Survey has succesfully created for id: ${survey.id}`
+        data: `Survey has succesfully created for id: ${survey.id}`,
+        surveyId: survey.id
       }
     }
   },

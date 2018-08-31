@@ -5,7 +5,8 @@ module.exports = (
   Survey,
   request,
   asyncBusboy,
-  Bluebird
+  Bluebird,
+  fs
 ) => ({
   surveyCsv: {
     async method (ctx) {
@@ -88,6 +89,40 @@ module.exports = (
       }
 
       ctx.body = { data: 'Questions has been successfully created' }
+    }
+  },
+  json: {
+    async method (ctx) {
+      const { files, fields } = await asyncBusboy(ctx.req)
+
+      // Authorization check
+      if (!fields.secret || fields.secret !== process.env.apiSecret) {
+        return Bluebird.reject({ status: 401, errors: 'unauthorized' })
+      }
+      var obj = require(files[0].path)
+
+      // Bulk survey, questions creation
+      for (var survey of obj) {
+        let questionsObj = {}
+        if (survey.questions) {
+          questionsObj = survey.questions
+          delete survey.questions
+        }
+        var newSurvey = await Survey.create(survey)
+        console.log(newSurvey.id)
+        for (var question of questionsObj) {
+          question.surveyId = newSurvey.id
+          await request.post({
+            uri: `${config.constants.URL}/admin/question-create`,
+            body: {
+              secret: process.env.apiSecret,
+              data: question
+            },
+            json: true
+          })
+        }
+      }
+      ctx.body = { data: obj }
     }
   }
 })
