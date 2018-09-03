@@ -538,19 +538,9 @@ module.exports = (
       }
 
       if (mcqAnswerNotMatching) {
-        let allPredefinedAnswers = await PredefinedAnswer.findAll({
-          where: { questionId },
-          order: ['displayOrder']
-        })
-        allPredefinedAnswers = allPredefinedAnswers.map(
-          ({ answerKey, answerValue }) => `${answerKey}: ${answerValue}`
-        )
         ctx.body = {
           data: {
-            status: 'dismatch',
-            reply: `Provided Answer [${mcqAnswerNotMatching}] does not match with predefined answers [${allPredefinedAnswers.join(
-              ', '
-            )}]`
+            status: 'dismatch'
           }
         }
         return

@@ -164,9 +164,14 @@ module.exports = (request, config, Sequelize, Bluebird, Message) => ({
 
       // Save message as answer to the question if not intro
       let nextQuestionId = questionId
+      let replaceFormatQuestionText = false
       if (participantSurveyStatus !== 'intro') {
         const {
-          data: { nextQuestionId: nextQuestionIdFromSaveAnswer, reply }
+          data: {
+            nextQuestionId: nextQuestionIdFromSaveAnswer,
+            reply,
+            status: saveAnswerStatus
+          }
         } = await request.post({
           uri: `${config.constants.URL}/admin/participant-save-answer`,
           body: {
@@ -175,7 +180,12 @@ module.exports = (request, config, Sequelize, Bluebird, Message) => ({
           },
           json: true
         })
-        nextQuestionId = nextQuestionIdFromSaveAnswer
+
+        if (saveAnswerStatus === 'dismatch') {
+          replaceFormatQuestionText = true
+        } else {
+          nextQuestionId = nextQuestionIdFromSaveAnswer
+        }
 
         if (reply) {
           await Message.create({
@@ -193,12 +203,15 @@ module.exports = (request, config, Sequelize, Bluebird, Message) => ({
 
       // Format question as reply message
       const {
-        data: { reply: formattedQuestion }
+        data: { reply: formattedQuestion, questionData }
       } = await request.post({
         uri: `${config.constants.URL}/admin/question-format`,
         body: {
           secret: process.env.apiSecret,
-          data: { questionId: nextQuestionId }
+          data: {
+            questionId: nextQuestionId,
+            replaceQuestionText: replaceFormatQuestionText
+          }
         },
         json: true
       })
@@ -209,7 +222,7 @@ module.exports = (request, config, Sequelize, Bluebird, Message) => ({
         participantID: participantId,
         direction: 'outgoing'
       })
-      ctx.body = { data: { reply: formattedQuestion } }
+      ctx.body = { data: { reply: formattedQuestion, questionData } }
     },
     onError (error) {
       if (error instanceof Sequelize.UniqueConstraintError) {

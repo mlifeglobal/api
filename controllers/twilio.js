@@ -1,7 +1,6 @@
 module.exports = (twilio, request, config) => ({
   receive: {
     async method (ctx) {
-      console.log(ctx.request.body)
       const { From: phone, Body: msg } = ctx.request.body
 
       const {
@@ -19,16 +18,18 @@ module.exports = (twilio, request, config) => ({
         json: true
       })
 
-      await request.post({
-        uri: `${config.constants.URL}/twilio-send`,
-        body: {
-          data: {
-            phone,
-            message: reply
-          }
-        },
-        json: true
-      })
+      if (reply) {
+        await request.post({
+          uri: `${config.constants.URL}/twilio-send`,
+          body: {
+            data: {
+              phone,
+              message: reply
+            }
+          },
+          json: true
+        })
+      }
 
       ctx.body = {}
     }

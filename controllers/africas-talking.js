@@ -6,7 +6,6 @@ module.exports = (request, config, africasTalking) => ({
         id: messageIdentifier,
         text: message
       } = ctx.request.body
-      console.log({ phone, messageIdentifier, message })
 
       const {
         data: { reply }
@@ -54,7 +53,6 @@ module.exports = (request, config, africasTalking) => ({
         message,
         enqueue: true
       })
-      console.log(res)
 
       ctx.body = {}
     }
@@ -75,7 +73,6 @@ module.exports = (request, config, africasTalking) => ({
           }
         ]
       })
-      console.log(res)
 
       ctx.body = {}
     }

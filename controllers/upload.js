@@ -109,7 +109,6 @@ module.exports = (
           delete survey.questions
         }
         var newSurvey = await Survey.create(survey)
-        console.log(newSurvey.id)
         for (var question of questionsObj) {
           question.surveyId = newSurvey.id
           await request.post({

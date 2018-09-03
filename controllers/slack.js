@@ -417,7 +417,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
               name: 'optInCodes',
               value: survey.optInCodes.join(),
               optional: true
-
             },
             {
               label: 'Init Codes',
@@ -425,7 +424,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
               name: 'initCodes',
               value: survey.initCodes.join(),
               optional: true
-
             },
             {
               label: 'Incentive',
@@ -433,7 +431,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
               name: 'incentive',
               value: survey.incentive,
               optional: true
-
             }
           ]
         })
@@ -470,7 +467,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         },
         json: true
       })
-      console.log(answers)
 
       const dialogObj = {
         token: process.env.slackAccessToken,
@@ -568,12 +564,9 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         }
 
         if (arrayObjs.indexOf(k) > -1 && body.submission[k] !== undefined) {
-          console.log(body.submission[k])
           body.submission[k] = body.submission[k].split(',')
-          console.log(body.submission[k])
-        } 
-        // Convert strings to int
-        else if (!isNaN(+body.submission[k])) {
+        } else if (!isNaN(+body.submission[k])) {
+          // Convert strings to int
           body.submission[k] = +body.submission[k]
         }
       })
@@ -586,7 +579,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         },
         json: true
       })
-      console.log(response.data)
       const obj = {
         token: process.env.slackAccessToken,
         channel: process.env.slackBot,

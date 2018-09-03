@@ -47,7 +47,6 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
       // Create entry for predefinedAnswers if provided
       if (predefinedAnswers && Object.keys(predefinedAnswers).length) {
         for (const answer in predefinedAnswers) {
-          console.log(answer)
           let answerCreateObj = {}
           answerCreateObj.questionId = quest.id
           answerCreateObj.answerKey = answer
@@ -61,7 +60,11 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
           await PredefinedAnswer.create(answerCreateObj)
         }
       }
-      ctx.body = { data: `Question with id ${quest.id} has been added to survey  ${surveyId}` }
+      ctx.body = {
+        data: `Question with id ${
+          quest.id
+        } has been added to survey  ${surveyId}`
+      }
     }
   },
   delete: {
@@ -210,7 +213,9 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
 
       await quest.update(questionUpdateObj)
 
-      ctx.body = { data: `Question has been successfully updated for ID: ${questionId}` }
+      ctx.body = {
+        data: `Question has been successfully updated for ID: ${questionId}`
+      }
     }
   },
 
@@ -343,7 +348,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
       }
       let found = false
       for (var ans of predAnswers) {
-        if (ans['answerKey'] == option) {
+        if (ans['answerKey'] === option) {
           found = true
           const predefinedAnswer = await PredefinedAnswer.findOne({
             where: { id: ans['id'] }
@@ -353,15 +358,23 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
           break
         }
       }
-      ctx.body = found ? { data: 'Branch succesfully setted' } : { data: 'No option found' }
+      ctx.body = found
+        ? { data: 'Branch succesfully setted' }
+        : { data: 'No option found' }
     }
   },
 
   format: {
-    schema: [['data', true, [['questionId', true, 'integer']]]],
+    schema: [
+      [
+        'data',
+        true,
+        [['questionId', true, 'integer'], ['replaceQuestionText', 'boolean']]
+      ]
+    ],
     async method (ctx) {
       const {
-        data: { questionId }
+        data: { questionId, replaceQuestionText }
       } = ctx.request.body
 
       const question = await Question.findOne({ where: { id: questionId } })
@@ -371,7 +384,11 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
         ])
       }
 
-      let reply = question.question
+      const questionData = { question: question.question, answers: {} }
+
+      let reply = replaceQuestionText
+        ? 'Please answer with one of the answers below:'
+        : question.question
       if (question.questionType === 'mcq') {
         const predefinedAnswers = await PredefinedAnswer.findAll({
           where: { questionId },
@@ -379,11 +396,12 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
         })
         predefinedAnswers.forEach(({ answerKey, answerValue }) => {
           reply += `\n${answerKey}: ${answerValue}`
+          questionData.answers[answerKey] = answerValue
         })
       }
 
       ctx.body = {
-        data: { reply }
+        data: { reply, questionData }
       }
     }
   },
