@@ -47,7 +47,7 @@ module.exports = (request, config, africasTalking) => ({
         data: { message, phone }
       } = ctx.request.body
 
-      const res = await africasTalking.SMS.send({
+      await africasTalking.SMS.send({
         from: process.env.africasTalkingShortcode,
         to: phone,
         message,
@@ -65,7 +65,7 @@ module.exports = (request, config, africasTalking) => ({
         data: { amount, phone }
       } = ctx.request.body
 
-      const res = await africasTalking.AIRTIME.send({
+      await africasTalking.AIRTIME.send({
         recipients: [
           {
             phoneNumber: phone,
