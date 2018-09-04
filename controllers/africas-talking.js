@@ -76,5 +76,28 @@ module.exports = (request, config, africasTalking) => ({
 
       ctx.body = {}
     }
+  },
+  bulkSms: {
+    schema: [['data', true, [['numbers', true, 'array'], ['message', true]]]],
+    async method (ctx) {
+      const {
+        data: { message, numbers }
+      } = ctx.request.body
+
+      for (var phone of numbers) {
+        await request.post({
+          uri: `${config.constants.URL}/africas-talking-send`,
+          body: {
+            data: {
+              phone,
+              message
+            }
+          },
+          json: true
+        })
+      }
+
+      ctx.body = {}
+    }
   }
 })
