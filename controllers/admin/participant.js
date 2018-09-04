@@ -10,17 +10,19 @@ module.exports = (
   lodash
 ) => ({
   create: {
-    schema: [['data', true, [['phone'], ['facebookId'], ['whatsappId']]]],
+    schema: [
+      ['data', true, [['phone'], ['facebookId'], ['fromWhatsapp', 'boolean']]]
+    ],
     async method (ctx) {
       const {
-        data: { phone, facebookId, whatsappId }
+        data: { phone, facebookId, fromWhatsapp }
       } = ctx.request.body
 
-      if (!phone && !facebookId && !whatsappId) {
+      if (!phone && !facebookId) {
         return Bluebird.reject([
           {
             key: 'participant',
-            value: `Participant Create requires either unique phone or facebook id or whatsapp id.`
+            value: `Participant Create requires either unique phone or facebook id.`
           }
         ])
       }
@@ -32,17 +34,16 @@ module.exports = (
       if (facebookId) {
         participantFindObj.facebookId = facebookId
       }
-      if (whatsappId) {
-        participantFindObj.whatsappId = whatsappId
-      }
 
       let participant = await Participant.findOne({ where: participantFindObj })
       if (!participant) {
         participant = await Participant.create({
           phone,
           facebookId,
-          whatsappId
+          hasWhatsapp: fromWhatsapp && true
         })
+      } else if (fromWhatsapp) {
+        participant.update({ hasWhatsapp: true })
       }
 
       ctx.body = { data: { participantId: participant.id } }

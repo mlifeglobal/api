@@ -12,11 +12,10 @@ module.exports = Sequelize => ({
       unique: true,
       field: 'facebook_id'
     },
-    whatsappId: {
-      type: Sequelize.STRING,
-      allowNull: true,
-      unique: true,
-      field: 'whatsapp_id'
+    hasWhatsapp: {
+      type: Sequelize.BOOLEAN,
+      field: 'has_whatsapp',
+      defaultValue: false
     }
   },
   associations: {

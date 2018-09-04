@@ -31,6 +31,7 @@ module.exports = (request, config, Sequelize, Bluebird, Message) => ({
       let identifierColumn
       let distributionPlatform
       switch (platform) {
+        case 'whatsapp':
         case 'sms':
           identifierColumn = 'phone'
           distributionPlatform = 'sms'
@@ -39,10 +40,6 @@ module.exports = (request, config, Sequelize, Bluebird, Message) => ({
           identifierColumn = 'facebookId'
           distributionPlatform = 'facebook'
           break
-        case 'whatsapp':
-          identifierColumn = 'whatsappId'
-          distributionPlatform = 'whatsapp'
-          break
         default:
           break
       }
@@ -50,6 +47,8 @@ module.exports = (request, config, Sequelize, Bluebird, Message) => ({
       // Get or create participant entry
       const participantData = {}
       participantData[identifierColumn] = identifier
+      participantData.fromWhatsapp = platform === 'whatsapp'
+
       const {
         data: { participantId }
       } = await request.post({
