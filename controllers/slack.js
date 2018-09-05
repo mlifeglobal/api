@@ -43,7 +43,7 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
               type: 'text',
               name: 'incentive',
               subtype: 'number',
-              value: 0
+              value: '0 KES'
             }
           ]
         })
@@ -429,7 +429,7 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
               label: 'Incentive',
               type: 'text',
               name: 'incentive',
-              value: survey.incentive,
+              value: survey.incentive + ' ' + survey.currency,
               optional: true
             }
           ]
@@ -600,7 +600,11 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         ) {
           body.submission[k] = JSON.parse(body.submission[k])
         }
-
+        if (k === 'incentive') {
+          let tmp = body.submission[k].split(' ')
+          body.submission['incentive'] = +tmp[0]
+          body.submission['currency'] = tmp[1]
+        }
         if (arrayObjs.indexOf(k) > -1 && body.submission[k] !== undefined) {
           body.submission[k] = body.submission[k].split(',')
         } else if (!isNaN(+body.submission[k])) {

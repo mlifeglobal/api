@@ -20,6 +20,10 @@ module.exports = Sequelize => ({
         type: Sequelize.INTEGER,
         field: 'incentive'
       },
+      currency: {
+        type: Sequelize.STRING,
+        field: 'currency'
+      },
       state: {
         type: Sequelize.ENUM,
         values: ['uninitiated', 'in_progress', 'completed'],

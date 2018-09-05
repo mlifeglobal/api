@@ -9,13 +9,14 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           ['description', true],
           ['introString', true],
           ['completionString', true],
-          ['incentive', true, 'integer']
+          ['incentive', true, 'integer'],
+          ['currency', true]
         ]
       ]
     ],
     async method (ctx) {
       const {
-        data: { name, description, introString, completionString, incentive }
+        data: { name, description, introString, completionString, incentive,currency }
       } = ctx.request.body
 
       const survey = await Survey.create({
@@ -23,7 +24,8 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         description,
         introString,
         completionString,
-        incentive
+        incentive,
+        currency
       })
 
       ctx.body = {
@@ -67,7 +69,8 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           ['incentive', 'integer'],
           ['optInCodes', 'array'],
           ['initCodes', 'array'],
-          ['platforms', 'array']
+          ['platforms', 'array'],
+          ['currency']
         ]
       ]
     ],
@@ -82,7 +85,8 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           incentive,
           optInCodes,
           initCodes,
-          platforms
+          platforms,
+          currency
         }
       } = ctx.request.body
 
@@ -102,7 +106,8 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       if (optInCodes) updateObj.optInCodes = optInCodes
       if (initCodes) updateObj.initCodes = initCodes
       if (platforms) updateObj.platforms = platforms
-
+      if (currency) updateObj.currency = currency
+      
       await survey.update(updateObj)
 
       ctx.body = {
