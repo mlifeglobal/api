@@ -5,8 +5,6 @@ const request = require('request-promise')
 const scheduler = require('node-schedule')
 const Twilio = require('twilio')
 const AfricasTalking = require('africastalking')
-const qs = require('querystring')
-const axios = require('axios')
 const asyncBusboy = require('async-busboy')
 var csv = require('csvtojson')
 var fs = require('fs')
@@ -25,8 +23,6 @@ module.exports = {
   scheduler,
   twilio,
   africasTalking,
-  qs,
-  axios,
   asyncBusboy,
   csv,
   fs

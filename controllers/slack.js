@@ -1,4 +1,4 @@
-module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
+module.exports = (Question, Survey, request, config, Bluebird) => ({
   createSurvey: {
     async method (ctx) {
       const { token, text, trigger_id } = ctx.request.body
@@ -9,7 +9,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         ])
       }
       const dialogObj = {
-        token: process.env.slackAccessToken,
         trigger_id: trigger_id,
         dialog: JSON.stringify({
           title: 'Create a Survey',
@@ -49,10 +48,11 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         })
       }
       // open the dialog by calling dialogs.open method and sending the payload
-      await axios.post(
-        'https://slack.com/api/dialog.open',
-        qs.stringify(dialogObj)
-      )
+      await request.post({
+        uri: `${config.constants.URL}/slack-open-dialog`,
+        body: dialogObj,
+        json: true
+      })
       ctx.body = ''
     }
   },
@@ -82,7 +82,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         optionsObj.push({ label: survey.name, value: survey.id })
       }
       const dialogObj = {
-        token: process.env.slackAccessToken,
         trigger_id: trigger_id,
         dialog: JSON.stringify({
           title: 'Add question to survey',
@@ -132,7 +131,8 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
                   label: 'Single',
                   value: 'single'
                 }
-              ]
+              ],
+              optional: true
             },
             {
               label: 'Predefined Answers',
@@ -145,13 +145,16 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
           ]
         })
       }
-      await axios.post(
-        'https://slack.com/api/dialog.open',
-        qs.stringify(dialogObj)
-      )
+      const res = await request.post({
+        uri: `${config.constants.URL}/slack-open-dialog`,
+        body: dialogObj,
+        json: true
+      })
+      console.log(res)
       ctx.body = ''
     }
   },
+
   setBranch: {
     async method (ctx) {
       const { token, trigger_id } = ctx.request.body
@@ -162,7 +165,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         ])
       }
       const dialogObj = {
-        token: process.env.slackAccessToken,
         trigger_id: trigger_id,
         dialog: JSON.stringify({
           title: 'Set Branch ',
@@ -188,13 +190,15 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         })
       }
       // open the dialog by calling dialogs.open method and sending the payload
-      await axios.post(
-        'https://slack.com/api/dialog.open',
-        qs.stringify(dialogObj)
-      )
+      await request.post({
+        uri: `${config.constants.URL}/slack-open-dialog`,
+        body: dialogObj,
+        json: true
+      })
       ctx.body = ''
     }
   },
+
   publishSurvey: {
     async method (ctx) {
       const { token, trigger_id } = ctx.request.body
@@ -221,7 +225,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
       }
 
       const dialogObj = {
-        token: process.env.slackAccessToken,
         trigger_id: trigger_id,
         dialog: JSON.stringify({
           title: 'Publish Survey',
@@ -244,13 +247,15 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         })
       }
 
-      await axios.post(
-        'https://slack.com/api/dialog.open',
-        qs.stringify(dialogObj)
-      )
+      await request.post({
+        uri: `${config.constants.URL}/slack-open-dialog`,
+        body: dialogObj,
+        json: true
+      })
       ctx.body = ''
     }
   },
+
   unpublishSurvey: {
     async method (ctx) {
       const { token, trigger_id } = ctx.request.body
@@ -277,7 +282,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
       }
 
       const dialogObj = {
-        token: process.env.slackAccessToken,
         trigger_id: trigger_id,
         dialog: JSON.stringify({
           title: 'Publish Survey',
@@ -300,13 +304,15 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         })
       }
 
-      await axios.post(
-        'https://slack.com/api/dialog.open',
-        qs.stringify(dialogObj)
-      )
+      await request.post({
+        uri: `${config.constants.URL}/slack-open-dialog`,
+        body: dialogObj,
+        json: true
+      })
       ctx.body = ''
     }
   },
+
   updateSurvey: {
     async method (ctx) {
       const { token, text, trigger_id } = ctx.request.body
@@ -322,7 +328,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         return Bluebird.reject([{ key: 'Error', value: `Survey not found` }])
       }
       const dialogObj = {
-        token: process.env.slackAccessToken,
         trigger_id: trigger_id,
         dialog: JSON.stringify({
           title: 'Update a Survey',
@@ -365,10 +370,11 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         })
       }
       // open the dialog by calling dialogs.open method and sending the payload
-      await axios.post(
-        'https://slack.com/api/dialog.open',
-        qs.stringify(dialogObj)
-      )
+      await request.post({
+        uri: `${config.constants.URL}/slack-open-dialog`,
+        body: dialogObj,
+        json: true
+      })
       ctx.body = ''
     }
   },
@@ -389,7 +395,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
       }
 
       const dialogObj = {
-        token: process.env.slackAccessToken,
         trigger_id: trigger_id,
         dialog: JSON.stringify({
           title: 'Update a Survey',
@@ -436,13 +441,15 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         })
       }
       // open the dialog by calling dialogs.open method and sending the payload
-      await axios.post(
-        'https://slack.com/api/dialog.open',
-        qs.stringify(dialogObj)
-      )
+      await request.post({
+        uri: `${config.constants.URL}/slack-open-dialog`,
+        body: dialogObj,
+        json: true
+      })
       ctx.body = ''
     }
   },
+
   updateQuestion: {
     async method (ctx) {
       const { token, text, trigger_id } = ctx.request.body
@@ -469,7 +476,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
       })
 
       const dialogObj = {
-        token: process.env.slackAccessToken,
         trigger_id: trigger_id,
         dialog: JSON.stringify({
           title: 'Update Question',
@@ -514,6 +520,7 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
               type: 'select',
               name: 'answerType',
               value: question.answerType,
+              optional: true,
               options: [
                 {
                   label: 'Multiple',
@@ -537,13 +544,15 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
           ]
         })
       }
-      await axios.post(
-        'https://slack.com/api/dialog.open',
-        qs.stringify(dialogObj)
-      )
+      await request.post({
+        uri: `${config.constants.URL}/slack-open-dialog`,
+        body: dialogObj,
+        json: true
+      })
       ctx.body = ''
     }
   },
+
   bulkSms: {
     async method (ctx) {
       const { token, trigger_id } = ctx.request.body
@@ -554,7 +563,6 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         ])
       }
       const dialogObj = {
-        token: process.env.slackAccessToken,
         trigger_id: trigger_id,
         dialog: JSON.stringify({
           title: 'Send Bulk Sms ',
@@ -575,18 +583,26 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         })
       }
       // open the dialog by calling dialogs.open method and sending the payload
-      await axios.post(
-        'https://slack.com/api/dialog.open',
-        qs.stringify(dialogObj)
-      )
+      await request.post({
+        uri: `${config.constants.URL}/slack-open-dialog`,
+        body: dialogObj,
+        json: true
+      })
       ctx.body = ''
     }
   },
+
   commandResponse: {
     async method (ctx) {
       const body = JSON.parse(ctx.request.body.payload)
 
-      let arrayObjs = ['skipQuestions', 'platforms', 'optInCodes', 'initCodes','numbers']
+      let arrayObjs = [
+        'skipQuestions',
+        'platforms',
+        'optInCodes',
+        'initCodes',
+        'numbers'
+      ]
 
       Object.keys(body.submission).forEach(k => {
         // Delete null elements
@@ -622,16 +638,36 @@ module.exports = (Question, Survey, request, config, Bluebird, qs, axios) => ({
         json: true
       })
       const obj = {
-        token: process.env.slackAccessToken,
         channel: process.env.slackBot,
         text: JSON.stringify(response.data)
       }
 
-      await axios.post(
-        'https://slack.com/api/chat.postMessage',
-        qs.stringify(obj)
-      )
+      await request.post({
+        uri: `${config.constants.SLACK_API}/chat.postMessage`,
+        headers: {
+          Authorization: `Bearer ${process.env.slackAccessToken}`
+        },
+        body: obj,
+        json: true
+      })
       ctx.body = ''
+    }
+  },
+
+  openDialog: {
+    async method (ctx) {
+      const body = ctx.request.body
+
+      await request.post({
+        uri: `${config.constants.SLACK_API}/dialog.open`,
+        headers: {
+          Authorization: `Bearer ${process.env.slackAccessToken}`
+        },
+        body,
+        json: true
+      })
+
+      ctx.body = {}
     }
   }
 })
