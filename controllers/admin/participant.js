@@ -7,7 +7,9 @@ module.exports = (
   Question,
   ParticipantAnswer,
   PredefinedAnswer,
-  lodash
+  lodash,
+  request,
+  config
 ) => ({
   create: {
     schema: [
@@ -580,6 +582,18 @@ module.exports = (
 
         if (status === 'completed') {
           await survey.update({ completedCount: survey.completedCount + 1 })
+
+          // Send Incentives
+          await request.post({
+            uri: `${config.constants.URL}/africas-talking-send-airtime`,
+            body: {
+              data: {
+                phone: participant.phone,
+                amount: `${survey.currency} ${survey.incentive}`
+              }
+            },
+            json: true
+          })
         }
       } else {
         await ParticipantSurvey.create({

@@ -359,7 +359,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
         }
       }
       ctx.body = found
-        ? { data: 'Branch succesfully setted' }
+        ? { data: 'Branch succesfully set' }
         : { data: 'No option found' }
     }
   },

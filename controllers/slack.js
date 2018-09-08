@@ -140,7 +140,7 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
               name: 'predefinedAnswers',
               optional: true,
               placeholder:
-                '{"a": { "value": option a, skipQuestions:[question IDs] },\n "b": { "value": option b },\n "c": { "value": option c }}'
+                '{"a": { "value": "option a" },\n "b": { "value": "option b", , "skipQuestions":[question IDs] },\n "c": { "value": "option c" }}'
             }
           ]
         })
@@ -174,17 +174,20 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
             {
               label: 'Question ID',
               type: 'text',
-              name: 'questionId'
+              name: 'questionId',
+              placeholder: 'Source question ID'
             },
             {
               label: 'Option',
               type: 'text',
-              name: 'option'
+              name: 'option',
+              placeholder: 'Answer Key'
             },
             {
               label: 'Questions to Skip',
               type: 'text',
-              name: 'skipQuestions'
+              name: 'skipQuestions',
+              placeholder: 'Comma seperated question IDs to skip'
             }
           ]
         })
@@ -284,7 +287,7 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
       const dialogObj = {
         trigger_id: trigger_id,
         dialog: JSON.stringify({
-          title: 'Publish Survey',
+          title: 'Unpublish Survey',
           callback_id: 'admin/survey-unpublish',
           submit_label: 'Submit',
           elements: [
@@ -321,6 +324,11 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
         return Bluebird.reject([
           { key: 'Access Denied', value: `Incorrect Verification Token` }
         ])
+      }
+
+      if (!text) {
+        ctx.body = 'Correct syntax: /updatesurvey [surveyID]'
+        return
       }
 
       const survey = await Survey.findOne({ where: { id: text } })
@@ -387,6 +395,11 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
         return Bluebird.reject([
           { key: 'Access Denied', value: `Incorrect Verification Token` }
         ])
+      }
+
+      if (!text) {
+        ctx.body = 'Correct syntax: /updatepublishinfo [surveyID]'
+        return
       }
 
       const survey = await Survey.findOne({ where: { id: text } })
@@ -458,6 +471,11 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
         return Bluebird.reject([
           { key: 'Access Denied', value: `Incorrect Verification Token` }
         ])
+      }
+
+      if (!text) {
+        ctx.body = 'Correct syntax: /updatequestion [questionID]'
+        return
       }
 
       const question = await Question.findOne({ where: { id: text } })
@@ -622,7 +640,7 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
           body.submission['currency'] = tmp[1]
         }
         if (arrayObjs.indexOf(k) > -1 && body.submission[k] !== undefined) {
-          body.submission[k] = body.submission[k].split(',')
+          body.submission[k] = body.submission[k].replace(/\s/g, '').split(',')
         } else if (!isNaN(+body.submission[k])) {
           // Convert strings to int
           body.submission[k] = +body.submission[k]
@@ -637,17 +655,10 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
         },
         json: true
       })
-      const obj = {
-        channel: process.env.slackBot,
-        text: JSON.stringify(response.data)
-      }
 
       await request.post({
-        uri: `${config.constants.SLACK_API}/chat.postMessage`,
-        headers: {
-          Authorization: `Bearer ${process.env.slackAccessToken}`
-        },
-        body: obj,
+        uri: process.env.slackWebhookURL,
+        body: { text: response.data },
         json: true
       })
       ctx.body = ''

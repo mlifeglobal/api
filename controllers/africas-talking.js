@@ -77,6 +77,23 @@ module.exports = (request, config, africasTalking) => ({
       ctx.body = {}
     }
   },
+
+  airtimeStatus: {
+    async method (ctx) {
+      const { requestId, status } = ctx.request.body
+
+      if (status === 'Failed') {
+        await request.post({
+          uri: process.env.slackWebhookURL,
+          body: { text: `Airtime Send Failed for RequestID: ${requestId}` },
+          json: true
+        })
+      }
+
+      ctx.body = {}
+    }
+  },
+
   bulkSms: {
     schema: [['data', true, [['numbers', true, 'array'], ['message', true]]]],
     async method (ctx) {
