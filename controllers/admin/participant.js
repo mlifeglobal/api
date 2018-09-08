@@ -429,7 +429,7 @@ module.exports = (
     ],
     async method (ctx) {
       const {
-        data: { participantId, surveyId, questionId, answers }
+        data: { participantId, surveyId, questionId, answers: rawAnswers }
       } = ctx.request.body
 
       const participant = await Participant.findOne({
@@ -480,6 +480,15 @@ module.exports = (
         ])
       }
 
+      // Parse multiple answers
+      let answers = rawAnswers
+      if (
+        question.questionType === 'mcq' &&
+        question.answerType === 'multiple'
+      ) {
+        answers = rawAnswers[0].replace(/\s/g, '').split(',')
+      }
+
       // Check if provided question id is not in the list of skipped questions
       let alreadySkipped = []
       const participantSurvey = await ParticipantSurvey.findOne({
@@ -521,10 +530,7 @@ module.exports = (
           const predefinedAnswer = await PredefinedAnswer.findOne({
             where: {
               questionId,
-              [Sequelize.Op.or]: [
-                { answerValue: answer },
-                { answerKey: answer }
-              ]
+              answerKey: answer
             }
           })
           if (predefinedAnswer) {
@@ -534,7 +540,7 @@ module.exports = (
               predefinedAnswer.skipQuestions
             )
           } else {
-            mcqAnswerNotMatching = answer || 'blank string'
+            mcqAnswerNotMatching = answer || 'blank'
             break
           }
         }

@@ -389,7 +389,13 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
       let reply = replaceQuestionText
         ? 'Please answer with one of the answers below:'
         : question.question
+
       if (question.questionType === 'mcq') {
+        reply +=
+          question.answerType === 'multiple'
+            ? '\n[In order to choose multiple answers, reply with comma separated answer keys]'
+            : '\n[Please, only reply with single answer key]'
+
         const predefinedAnswers = await PredefinedAnswer.findAll({
           where: { questionId },
           order: ['displayOrder']
