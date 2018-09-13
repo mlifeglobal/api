@@ -1,4 +1,4 @@
-module.exports = (request, config, Sequelize, Bluebird, Message) => ({
+module.exports = (request, config, Sequelize, Bluebird, Message, Constant) => ({
   process: {
     schema: [
       [
@@ -43,7 +43,6 @@ module.exports = (request, config, Sequelize, Bluebird, Message) => ({
         default:
           break
       }
-
       // Get or create participant entry
       const participantData = {}
       participantData[identifierColumn] = identifier
@@ -67,6 +66,23 @@ module.exports = (request, config, Sequelize, Bluebird, Message) => ({
         participantID: participantId,
         messageIdentifier
       })
+
+      if (message === 'reset') {
+        const resetPerm = await Constant.findOne({ where: { name: 'reset' } })
+        let tmpIdentifiers = resetPerm.text.split(',')
+        if (tmpIdentifiers.indexOf(identifier) > -1) {
+          const { data } = await request.post({
+            uri: `${config.constants.URL}/admin/participant-delete`,
+            body: {
+              secret: process.env.apiSecret,
+              data: { participantId }
+            },
+            json: true
+          })
+          ctx.body = data
+          return
+        }
+      }
 
       // Fetch the survey
       const {

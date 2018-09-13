@@ -81,7 +81,9 @@ module.exports = (
         ])
       }
 
-      await participant.destroy()
+      await Participant.destroy({
+        where: { id: participantId }
+      })
 
       ctx.body = { data: { participantId } }
     }
