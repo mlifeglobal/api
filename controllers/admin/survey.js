@@ -16,7 +16,14 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
     ],
     async method (ctx) {
       const {
-        data: { name, description, introString, completionString, incentive,currency }
+        data: {
+          name,
+          description,
+          introString,
+          completionString,
+          incentive,
+          currency
+        }
       } = ctx.request.body
 
       const survey = await Survey.create({
@@ -96,18 +103,18 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
       }
-
+      
       let updateObj = {}
       if (name) updateObj.name = name
       if (description) updateObj.description = description
       if (introString) updateObj.introString = introString
       if (completionString) updateObj.completionString = completionString
-      if (incentive) updateObj.incentive = incentive
+      if (incentive !== undefined) updateObj.incentive = incentive
       if (optInCodes) updateObj.optInCodes = optInCodes
       if (initCodes) updateObj.initCodes = initCodes
       if (platforms) updateObj.platforms = platforms
       if (currency) updateObj.currency = currency
-      
+
       await survey.update(updateObj)
 
       ctx.body = {
@@ -175,7 +182,9 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       })
 
       ctx.body = {
-        data: `Survey has succesfully unpublished from ${platforms} for id: ${survey.id}`
+        data: `Survey has succesfully unpublished from ${platforms} for id: ${
+          survey.id
+        }`
       }
     }
   },
