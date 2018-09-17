@@ -223,7 +223,7 @@ module.exports = (
       // Validate opt in code
       const whereClause = {
         state: 'in_progress',
-        optInCodes: { [Sequelize.Op.contains]: [optInCode] }
+        optInCodes: { [Sequelize.Op.contains]: [optInCode.toLowerCase()] }
       }
       if (platform) {
         whereClause.platforms = { [Sequelize.Op.contains]: [platform] }

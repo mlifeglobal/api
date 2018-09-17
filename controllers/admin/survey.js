@@ -90,7 +90,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           introString,
           completionString,
           incentive,
-          optInCodes,
+          optInCodes: optInCodesGiven,
           initCodes,
           platforms,
           currency
@@ -103,6 +103,8 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
       }
+
+      const optInCodes = optInCodesGiven.map(code => code.toLowerCase())
 
       const optInCodesInUse = await Survey.optInCodesInUse(
         optInCodes,
@@ -210,7 +212,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
     ],
     async method (ctx) {
       const {
-        data: { surveyId, optInCodes }
+        data: { surveyId, optInCodes: optInCodesGiven }
       } = ctx.request.body
 
       const survey = await Survey.findOne({ where: { id: surveyId } })
@@ -219,6 +221,8 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
       }
+
+      const optInCodes = optInCodesGiven.map(code => code.toLowerCase())
 
       const optInCodesInUse = await Survey.optInCodesInUse(
         optInCodes,
