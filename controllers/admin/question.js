@@ -81,7 +81,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
         ])
       }
 
-      await question.destroy()
+      await Question.destroy({ where: { id: questionId } })
 
       ctx.body = { data: { questionId } }
     }
@@ -138,7 +138,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
       }
 
       let deletedAnswerid = answer.id
-      await answer.destroy()
+      await PredefinedAnswer.destroy(answerFindObj)
 
       ctx.body = { data: { deletedAnswerid } }
     }

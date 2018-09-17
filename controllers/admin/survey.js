@@ -16,7 +16,14 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
     ],
     async method (ctx) {
       const {
-        data: { name, description, introString, completionString, incentive,currency }
+        data: {
+          name,
+          description,
+          introString,
+          completionString,
+          incentive,
+          currency
+        }
       } = ctx.request.body
 
       const survey = await Survey.create({
@@ -48,7 +55,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         ])
       }
 
-      await survey.destroy()
+      await Survey.destroy({ where: { id: surveyId } })
 
       ctx.body = {
         data: `Survey has succesfully deleted for id: ${survey.id}`
@@ -107,7 +114,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       if (initCodes) updateObj.initCodes = initCodes
       if (platforms) updateObj.platforms = platforms
       if (currency) updateObj.currency = currency
-      
+
       await survey.update(updateObj)
 
       ctx.body = {
@@ -175,7 +182,9 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       })
 
       ctx.body = {
-        data: `Survey has succesfully unpublished from ${platforms} for id: ${survey.id}`
+        data: `Survey has succesfully unpublished from ${platforms} for id: ${
+          survey.id
+        }`
       }
     }
   },
