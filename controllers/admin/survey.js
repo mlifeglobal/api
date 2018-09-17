@@ -104,6 +104,18 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         ])
       }
 
+      const optInCodesInUse = await Survey.optInCodesInUse(
+        optInCodes,
+        survey.id
+      )
+      if (optInCodesInUse.length > 0) {
+        ctx.body = {
+          ok: false,
+          data: `Opt in codes ${optInCodesInUse.join()} are already in use by other active surveys.`
+        }
+        return
+      }
+
       let updateObj = {}
       if (name) updateObj.name = name
       if (description) updateObj.description = description
@@ -206,6 +218,18 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         return Bluebird.reject([
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
+      }
+
+      const optInCodesInUse = await Survey.optInCodesInUse(
+        optInCodes,
+        survey.id
+      )
+      if (optInCodesInUse.length > 0) {
+        ctx.body = {
+          ok: false,
+          data: `Opt in codes ${optInCodesInUse.join()} are already in use by other active surveys.`
+        }
+        return
       }
 
       await survey.update({
