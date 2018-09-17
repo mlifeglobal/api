@@ -121,7 +121,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       if (description) updateObj.description = description
       if (introString) updateObj.introString = introString
       if (completionString) updateObj.completionString = completionString
-      if (incentive) updateObj.incentive = incentive
+      if (incentive !== undefined) updateObj.incentive = incentive
       if (optInCodes) updateObj.optInCodes = optInCodes
       if (initCodes) updateObj.initCodes = initCodes
       if (platforms) updateObj.platforms = platforms
