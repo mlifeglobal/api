@@ -77,7 +77,6 @@ module.exports = (Sequelize, lodash) => ({
         where.id = { [Sequelize.Op.ne]: excludedID }
       }
       const activeSurveys = await this.findAll({ where })
-      console.log(activeSurveys.length)
 
       activeSurveys.forEach(({ optInCodes: activeOptinCodes }) => {
         optInCodesInUse = lodash.union(

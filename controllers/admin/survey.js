@@ -90,7 +90,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           introString,
           completionString,
           incentive,
-          optInCodes: optInCodesGiven,
+          optInCodes: givenOptInCodes,
           initCodes,
           platforms,
           currency
@@ -104,7 +104,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         ])
       }
 
-      const optInCodes = optInCodesGiven.map(code => code.toLowerCase())
+      const optInCodes = givenOptInCodes.map(code => code.toLowerCase())
 
       const optInCodesInUse = await Survey.optInCodesInUse(
         optInCodes,
@@ -212,7 +212,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
     ],
     async method (ctx) {
       const {
-        data: { surveyId, optInCodes: optInCodesGiven }
+        data: { surveyId, optInCodes: givenOptInCodes }
       } = ctx.request.body
 
       const survey = await Survey.findOne({ where: { id: surveyId } })
@@ -222,7 +222,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
         ])
       }
 
-      const optInCodes = optInCodesGiven.map(code => code.toLowerCase())
+      const optInCodes = givenOptInCodes.map(code => code.toLowerCase())
 
       const optInCodesInUse = await Survey.optInCodesInUse(
         optInCodes,
@@ -255,7 +255,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
     ],
     async method (ctx) {
       const {
-        data: { surveyId, optInCodes }
+        data: { surveyId, optInCodes: givenOptInCodes }
       } = ctx.request.body
 
       const survey = await Survey.findOne({ where: { id: surveyId } })
@@ -264,6 +264,8 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
       }
+
+      const optInCodes = givenOptInCodes.map(code => code.toLowerCase())
 
       await survey.update({
         optInCodes: lodash.remove(
@@ -287,7 +289,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
     ],
     async method (ctx) {
       const {
-        data: { surveyId, initCodes }
+        data: { surveyId, initCodes: givenInitCodes }
       } = ctx.request.body
 
       const survey = await Survey.findOne({ where: { id: surveyId } })
@@ -296,6 +298,8 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
       }
+
+      const initCodes = givenInitCodes.map(code => code.toLowerCase())
 
       await survey.update({
         initCodes: lodash.union(survey.initCodes, initCodes)
@@ -316,7 +320,7 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
     ],
     async method (ctx) {
       const {
-        data: { surveyId, initCodes }
+        data: { surveyId, initCodes: givenInitCodes }
       } = ctx.request.body
 
       const survey = await Survey.findOne({ where: { id: surveyId } })
@@ -325,6 +329,8 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
       }
+
+      const initCodes = givenInitCodes.map(code => code.toLowerCase())
 
       await survey.update({
         initCodes: lodash.remove(
