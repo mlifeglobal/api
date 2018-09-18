@@ -33,6 +33,16 @@ module.exports = Sequelize => ({
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE'
     },
+    surveyID: {
+      type: Sequelize.INTEGER,
+      field: 'survey_id',
+      references: {
+        model: 'surveys',
+        key: 'id'
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
+    },
     createdDate: {
       type: Sequelize.DATE,
       field: 'created_date'

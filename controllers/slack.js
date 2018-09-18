@@ -609,7 +609,43 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
       ctx.body = ''
     }
   },
+  getSurveyQuestions: {
+    async method (ctx) {
+      const { token, text, trigger_id } = ctx.request.body
 
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+
+      if (!text) {
+        ctx.body = 'Correct syntax: /getSurveyQuestions [surveyID]'
+        return
+      }
+
+      const survey = await Survey.findOne({ where: { id: text } })
+      if (!survey) {
+        return Bluebird.reject([{ key: 'Error', value: `Survey not found` }])
+      }
+      
+      const response = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-questions`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {surveyId: survey.id}
+        },
+        json: true
+      })
+
+      await request.post({
+        uri: process.env.slackWebhookURL,
+        body: { text: response.data },
+        json: true
+      })
+      ctx.body = ''
+    }
+  },
   commandResponse: {
     async method (ctx) {
       const body = JSON.parse(ctx.request.body.payload)
