@@ -12,7 +12,9 @@ module.exports = Sequelize => ({
       references: {
         model: 'surveys',
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     },
     questionId: {
       type: Sequelize.INTEGER,
@@ -21,7 +23,9 @@ module.exports = Sequelize => ({
       references: {
         model: 'questions',
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     },
     participantId: {
       type: Sequelize.INTEGER,

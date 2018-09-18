@@ -22,7 +22,9 @@ module.exports = Sequelize => ({
       references: {
         model: 'surveys',
         key: 'id'
-      }
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
     },
     participantId: {
       type: Sequelize.INTEGER,
