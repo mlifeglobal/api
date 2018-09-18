@@ -589,7 +589,16 @@ module.exports = (
         })
 
         if (status === 'completed') {
-          await survey.update({ completedCount: survey.completedCount + 1 })
+          const newCompletedCount = survey.completedCount + 1
+          const newState =
+            survey.maxCompletionLimit &&
+            survey.maxCompletionLimit <= newCompletedCount
+              ? 'completed'
+              : survey.state
+          await survey.update({
+            completedCount: newCompletedCount,
+            state: newState
+          })
 
           if (participant.phone) {
             // Send Incentives

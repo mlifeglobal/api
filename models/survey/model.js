@@ -35,6 +35,10 @@ module.exports = (Sequelize, lodash) => ({
       defaultValue: 0,
       field: 'completed_count'
     },
+    maxCompletionLimit: {
+      type: Sequelize.INTEGER,
+      field: 'max_completion_limit'
+    },
     optInCodes: {
       type: Sequelize.ARRAY(Sequelize.STRING),
       defaultValue: [],
