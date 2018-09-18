@@ -63,7 +63,7 @@ module.exports = (
         ])
       }
 
-      await survey.destroy()
+      await Survey.destroy({ where: { id: surveyId } })
 
       ctx.body = {
         data: `Survey has succesfully deleted for id: ${survey.id}`
@@ -98,7 +98,7 @@ module.exports = (
           introString,
           completionString,
           incentive,
-          optInCodes,
+          optInCodes: givenOptInCodes,
           initCodes,
           platforms,
           currency
@@ -110,6 +110,20 @@ module.exports = (
         return Bluebird.reject([
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
+      }
+
+      const optInCodes = givenOptInCodes.map(code => code.toLowerCase())
+
+      const optInCodesInUse = await Survey.optInCodesInUse(
+        optInCodes,
+        survey.id
+      )
+      if (optInCodesInUse.length > 0) {
+        ctx.body = {
+          ok: false,
+          data: `Opt in codes ${optInCodesInUse.join()} are already in use by other active surveys.`
+        }
+        return
       }
 
       let updateObj = {}
@@ -206,7 +220,7 @@ module.exports = (
     ],
     async method (ctx) {
       const {
-        data: { surveyId, optInCodes }
+        data: { surveyId, optInCodes: givenOptInCodes }
       } = ctx.request.body
 
       const survey = await Survey.findOne({ where: { id: surveyId } })
@@ -214,6 +228,20 @@ module.exports = (
         return Bluebird.reject([
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
+      }
+
+      const optInCodes = givenOptInCodes.map(code => code.toLowerCase())
+
+      const optInCodesInUse = await Survey.optInCodesInUse(
+        optInCodes,
+        survey.id
+      )
+      if (optInCodesInUse.length > 0) {
+        ctx.body = {
+          ok: false,
+          data: `Opt in codes ${optInCodesInUse.join()} are already in use by other active surveys.`
+        }
+        return
       }
 
       await survey.update({
@@ -235,7 +263,7 @@ module.exports = (
     ],
     async method (ctx) {
       const {
-        data: { surveyId, optInCodes }
+        data: { surveyId, optInCodes: givenOptInCodes }
       } = ctx.request.body
 
       const survey = await Survey.findOne({ where: { id: surveyId } })
@@ -244,6 +272,8 @@ module.exports = (
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
       }
+
+      const optInCodes = givenOptInCodes.map(code => code.toLowerCase())
 
       await survey.update({
         optInCodes: lodash.remove(
@@ -267,7 +297,7 @@ module.exports = (
     ],
     async method (ctx) {
       const {
-        data: { surveyId, initCodes }
+        data: { surveyId, initCodes: givenInitCodes }
       } = ctx.request.body
 
       const survey = await Survey.findOne({ where: { id: surveyId } })
@@ -276,6 +306,8 @@ module.exports = (
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
       }
+
+      const initCodes = givenInitCodes.map(code => code.toLowerCase())
 
       await survey.update({
         initCodes: lodash.union(survey.initCodes, initCodes)
@@ -296,7 +328,7 @@ module.exports = (
     ],
     async method (ctx) {
       const {
-        data: { surveyId, initCodes }
+        data: { surveyId, initCodes: givenInitCodes }
       } = ctx.request.body
 
       const survey = await Survey.findOne({ where: { id: surveyId } })
@@ -305,6 +337,8 @@ module.exports = (
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
       }
+
+      const initCodes = givenInitCodes.map(code => code.toLowerCase())
 
       await survey.update({
         initCodes: lodash.remove(

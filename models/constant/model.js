@@ -10,6 +10,9 @@ module.exports = Sequelize => ({
       type: Sequelize.STRING,
       allowNull: false,
       field: 'text'
+    },
+    description: {
+      type: Sequelize.STRING
     }
   }
 })

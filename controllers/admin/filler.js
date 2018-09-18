@@ -67,11 +67,11 @@ module.exports = (request, config, Sequelize, Bluebird, Message, Constant) => ({
         messageIdentifier
       })
 
-      if (message === 'reset') {
+      if (message.toLowerCase() === 'reset') {
         const resetPerm = await Constant.findOne({ where: { name: 'reset' } })
         let tmpIdentifiers = resetPerm.text.split(',')
         if (tmpIdentifiers.indexOf(identifier) > -1) {
-          const { data } = await request.post({
+          await request.post({
             uri: `${config.constants.URL}/admin/participant-delete`,
             body: {
               secret: process.env.apiSecret,
@@ -79,7 +79,12 @@ module.exports = (request, config, Sequelize, Bluebird, Message, Constant) => ({
             },
             json: true
           })
-          ctx.body = data
+          ctx.body = {
+            data: {
+              reply:
+                'You have been reset. Please reply back with valid opt in code to start filling.'
+            }
+          }
           return
         }
       }

@@ -1,4 +1,4 @@
-module.exports = Sequelize => ({
+module.exports = (Sequelize, lodash) => ({
   attributes: {
     name: {
       type: Sequelize.STRING,
@@ -35,6 +35,10 @@ module.exports = Sequelize => ({
       defaultValue: 0,
       field: 'completed_count'
     },
+    maxCompletionLimit: {
+      type: Sequelize.INTEGER,
+      field: 'max_completion_limit'
+    },
     optInCodes: {
       type: Sequelize.ARRAY(Sequelize.STRING),
       defaultValue: [],
@@ -63,7 +67,31 @@ module.exports = Sequelize => ({
       field: 'closed_date'
     }
   },
-  classMethods: {},
+  classMethods: {
+    async optInCodesInUse (optInCodesGiven, excludedID = 0) {
+      const optInCodes =
+        optInCodesGiven.constructor === Array
+          ? optInCodesGiven
+          : optInCodesGiven.split(',')
+
+      let optInCodesInUse = []
+
+      const where = { state: { [Sequelize.Op.ne]: 'completed' } }
+      if (excludedID) {
+        where.id = { [Sequelize.Op.ne]: excludedID }
+      }
+      const activeSurveys = await this.findAll({ where })
+
+      activeSurveys.forEach(({ optInCodes: activeOptinCodes }) => {
+        optInCodesInUse = lodash.union(
+          optInCodesInUse,
+          lodash.intersection(optInCodes, activeOptinCodes)
+        )
+      })
+
+      return optInCodesInUse
+    }
+  },
   instanceMethods: {},
   associations: {
     hasMany: 'Question',
