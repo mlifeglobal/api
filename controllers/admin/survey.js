@@ -1,4 +1,12 @@
-module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
+module.exports = (
+  Sequelize,
+  Bluebird,
+  Survey,
+  lodash,
+  Question,
+  config,
+  request
+) => ({
   create: {
     schema: [
       [
@@ -376,6 +384,55 @@ module.exports = (Sequelize, Bluebird, Survey, lodash) => ({
       })
 
       ctx.body = { data: { surveys } }
+    }
+  },
+  getQuestions: {
+    schema: [['data', true, [['surveyId', true, 'integer']]]],
+    async method (ctx) {
+      const {
+        data: { surveyId }
+      } = ctx.request.body
+
+      const survey = await Survey.findOne({ where: { id: surveyId } })
+      if (!survey) {
+        return Bluebird.reject([
+          { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
+        ])
+      }
+
+      const questions = await Question.findAll({
+        where: { surveyId },
+        raw: true
+      })
+      let questionsObj = `Questions for survey ${surveyId}\n\n`
+
+      for (var question of questions) {
+        if (question.questionType === 'open') {
+          questionsObj += 'ID ' + question.id + ' - ' + question.question + '\n'
+        } else {
+          const {
+            data: { questionData }
+          } = await request.post({
+            uri: `${config.constants.URL}/admin/question-format`,
+            body: {
+              secret: process.env.apiSecret,
+              data: { questionId: question.id }
+            },
+            json: true
+          })
+
+          questionsObj += 'ID ' +
+            question.id +
+            ' - ' +
+            questionData.question +
+            '\n\t\t' +
+            JSON.stringify(questionData.answers) +
+            '\n'
+        }
+      }
+      ctx.body = {
+        data: questionsObj
+      }
     }
   }
 })
