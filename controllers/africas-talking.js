@@ -1,4 +1,4 @@
-module.exports = (request, config, africasTalking) => ({
+module.exports = (request, config, africasTalking, IncentiveRecord) => ({
   receive: {
     async method (ctx) {
       const {
@@ -59,20 +59,45 @@ module.exports = (request, config, africasTalking) => ({
   },
 
   sendAirtime: {
-    schema: [['data', true, [['phone', true], ['amount', true]]]],
+    schema: [
+      [
+        'data',
+        true,
+        [
+          ['phones', true, 'array'],
+          ['amount', true],
+          ['surveyId', true, 'integer']
+        ]
+      ]
+    ],
     async method (ctx) {
       const {
-        data: { amount, phone }
+        data: { amount, phones, surveyId }
       } = ctx.request.body
 
-      await africasTalking.AIRTIME.send({
-        recipients: [
-          {
-            phoneNumber: phone,
-            amount
-          }
-        ]
+      let recipients = []
+      for (const phoneNumber of phones) {
+        recipients.push({ phoneNumber, amount })
+      }
+
+      const { responses } = await africasTalking.AIRTIME.send({
+        recipients
       })
+
+      for (const {
+        errorMessage,
+        phoneNumber,
+        amount: amountSent,
+        requestId
+      } of responses) {
+        IncentiveRecord.create({
+          amount: amountSent,
+          phone: phoneNumber,
+          requestId,
+          surveyId,
+          status: errorMessage === 'None' ? 'Sent' : 'Failed'
+        })
+      }
 
       ctx.body = {}
     }
@@ -82,8 +107,10 @@ module.exports = (request, config, africasTalking) => ({
     async method (ctx) {
       const { requestId, status } = ctx.request.body
 
+      IncentiveRecord.update({ status }, { where: { requestId } })
+
       if (status === 'Failed') {
-        await request.post({
+        request.post({
           uri: process.env.slackWebhookURL,
           body: { text: `Airtime Send Failed for RequestID: ${requestId}` },
           json: true
@@ -114,7 +141,41 @@ module.exports = (request, config, africasTalking) => ({
         })
       }
 
-      ctx.body = {}
+      ctx.body = { data: 'Bulk SMS Sent' }
+    }
+  },
+
+  bulkAirtime: {
+    schema: [
+      [
+        'data',
+        true,
+        [
+          ['numbers', true, 'array'],
+          ['incentive', true, 'integer'],
+          ['currency', true],
+          ['surveyId', true, 'integer']
+        ]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { incentive, currency, numbers: phones, surveyId }
+      } = ctx.request.body
+
+      await request.post({
+        uri: `${config.constants.URL}/africas-talking-send-airtime`,
+        body: {
+          data: {
+            phones,
+            amount: `${currency} ${incentive}`,
+            surveyId
+          }
+        },
+        json: true
+      })
+
+      ctx.body = { data: 'Bulk Airtime Sent' }
     }
   }
 })

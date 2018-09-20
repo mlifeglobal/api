@@ -606,8 +606,9 @@ module.exports = (
               uri: `${config.constants.URL}/africas-talking-send-airtime`,
               body: {
                 data: {
-                  phone: participant.phone,
-                  amount: `${survey.currency} ${survey.incentive}`
+                  phones: [participant.phone],
+                  amount: `${survey.currency} ${survey.incentive}`,
+                  surveyId: survey.id
                 }
               },
               json: true
@@ -632,6 +633,53 @@ module.exports = (
           reply: nextQuestion ? undefined : survey.completionString
         }
       }
+    }
+  },
+
+  fetchData: {
+    schema: [['data', true, [['surveyId', true, 'integer']]]],
+    async method (ctx) {
+      const {
+        data: { surveyId }
+      } = ctx.request.body
+
+      let message = '-------------------------------------\n'
+
+      const questions = await Question.findAll({
+        where: { surveyId },
+        order: [['order']]
+      })
+      for (const { id: questionId, question, questionType } of questions) {
+        message += `Answers for Question ID [${questionId}] - Asked [${question}]\n`
+        const participantAnswers = await ParticipantAnswer.findAll({
+          where: { questionId }
+        })
+        for (const { participantId, answers } of participantAnswers) {
+          let answer = answers[0]
+          if (questionType === 'mcq') {
+            const prefedefinedAnswers = await PredefinedAnswer.findAll({
+              where: { answerKey: { [Sequelize.Op.in]: answers } }
+            })
+            answer = prefedefinedAnswers
+              .map(({ answerValue }) => answerValue)
+              .join()
+          }
+
+          const participant = await Participant.findOne({
+            where: { id: participantId }
+          })
+          message += `Participant ID ${participantId}, Phone ${
+            participant
+              ? participant.phone
+              : participant.facebookId
+                ? participant.facebookId
+                : 'unknown'
+          } answered the followings:\n\t${answer}\n`
+        }
+        message += '\n'
+      }
+
+      ctx.body = { message }
     }
   }
 })

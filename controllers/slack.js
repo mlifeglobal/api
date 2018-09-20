@@ -590,12 +590,14 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
             {
               label: 'Phone numbers',
               type: 'text',
-              name: 'numbers'
+              name: 'numbers',
+              placeholder: 'Comma separated full phone numbers'
             },
             {
               label: 'Message',
               type: 'textarea',
-              name: 'message'
+              name: 'message',
+              placeholder: 'The message you want to send out'
             }
           ]
         })
@@ -609,9 +611,75 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
       ctx.body = ''
     }
   },
-  getSurveyQuestions: {
+
+  bulkAirtime: {
     async method (ctx) {
-      const { token, text, trigger_id } = ctx.request.body
+      const { token, trigger_id } = ctx.request.body
+
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+
+      const {
+        data: { surveys }
+      } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-all`,
+        body: {
+          secret: process.env.apiSecret
+        },
+        json: true
+      })
+
+      let optionsObj = []
+      for (var survey of surveys) {
+        optionsObj.push({ label: survey.name, value: survey.id })
+      }
+
+      const dialogObj = {
+        trigger_id: trigger_id,
+        dialog: JSON.stringify({
+          title: 'Send Bulk Airtime ',
+          callback_id: 'africas-talking-bulk-airtime',
+          submit_label: 'Submit',
+          elements: [
+            {
+              label: 'Surveys',
+              type: 'select',
+              subtype: 'number',
+              name: 'surveyId',
+              options: optionsObj
+            },
+            {
+              label: 'Phone numbers',
+              type: 'text',
+              name: 'numbers',
+              placeholder: 'Comma separated full phone numbers'
+            },
+            {
+              label: 'Incentive',
+              type: 'text',
+              name: 'incentive',
+              subtype: 'number',
+              value: '0 KES'
+            }
+          ]
+        })
+      }
+      // open the dialog by calling dialogs.open method and sending the payload
+      await request.post({
+        uri: `${config.constants.URL}/slack-open-dialog`,
+        body: dialogObj,
+        json: true
+      })
+      ctx.body = ''
+    }
+  },
+
+  getQuestions: {
+    async method (ctx) {
+      const { token, text } = ctx.request.body
 
       if (token !== process.env.slackVerificationToken) {
         return Bluebird.reject([
@@ -628,12 +696,12 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
       if (!survey) {
         return Bluebird.reject([{ key: 'Error', value: `Survey not found` }])
       }
-      
+
       const response = await request.post({
         uri: `${config.constants.URL}/admin/survey-get-questions`,
         body: {
           secret: process.env.apiSecret,
-          data: {surveyId: survey.id}
+          data: { surveyId: survey.id }
         },
         json: true
       })
@@ -646,6 +714,112 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
       ctx.body = ''
     }
   },
+
+  systemInfo: {
+    async method (ctx) {
+      const { token } = ctx.request.body
+
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+
+      const { message } = await request.post({
+        uri: `${config.constants.URL}/admin/system-info`,
+        body: {
+          secret: process.env.apiSecret
+        },
+        json: true
+      })
+
+      await request.post({
+        uri: process.env.slackWebhookURL,
+        body: { text: message },
+        json: true
+      })
+      ctx.body = ''
+    }
+  },
+
+  liveSurveyData: {
+    async method (ctx) {
+      const { token, text } = ctx.request.body
+
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+
+      if (!text) {
+        ctx.body = 'Correct syntax: /livesurveydata [surveyID]'
+        return
+      }
+
+      const survey = await Survey.findOne({ where: { id: text } })
+      if (!survey) {
+        return Bluebird.reject([{ key: 'Error', value: `Survey not found` }])
+      }
+
+      const { message } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-live-data`,
+        body: {
+          secret: process.env.apiSecret,
+          data: { surveyId: survey.id }
+        },
+        json: true
+      })
+
+      await request.post({
+        uri: process.env.slackWebhookURL,
+        body: { text: message },
+        json: true
+      })
+
+      ctx.body = ''
+    }
+  },
+
+  getParticipantData: {
+    async method (ctx) {
+      const { token, text } = ctx.request.body
+
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+
+      if (!text) {
+        ctx.body = 'Correct syntax: /getparticipantdata [surveyID]'
+        return
+      }
+
+      const survey = await Survey.findOne({ where: { id: text } })
+      if (!survey) {
+        return Bluebird.reject([{ key: 'Error', value: `Survey not found` }])
+      }
+
+      const { message } = await request.post({
+        uri: `${config.constants.URL}/admin/participant-fetch-data`,
+        body: {
+          secret: process.env.apiSecret,
+          data: { surveyId: survey.id }
+        },
+        json: true
+      })
+
+      await request.post({
+        uri: process.env.slackWebhookURL,
+        body: { text: message },
+        json: true
+      })
+
+      ctx.body = ''
+    }
+  },
+
   commandResponse: {
     async method (ctx) {
       const body = JSON.parse(ctx.request.body.payload)

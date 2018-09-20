@@ -2,6 +2,8 @@ module.exports = (
   Sequelize,
   Bluebird,
   Survey,
+  ParticipantSurvey,
+  IncentiveRecord,
   lodash,
   Question,
   config,
@@ -402,9 +404,12 @@ module.exports = (
 
       const questions = await Question.findAll({
         where: { surveyId },
+        order: [['order']],
         raw: true
       })
-      let questionsObj = `Questions for survey ${surveyId}\n\n`
+
+      let questionsObj = '-------------------------------------\n'
+      questionsObj += `Questions for survey ${surveyId}\n\n`
 
       for (var question of questions) {
         if (question.questionType === 'open') {
@@ -421,7 +426,8 @@ module.exports = (
             json: true
           })
 
-          questionsObj += 'ID ' +
+          questionsObj +=
+            'ID ' +
             question.id +
             ' - ' +
             questionData.question +
@@ -433,6 +439,65 @@ module.exports = (
       ctx.body = {
         data: questionsObj
       }
+    }
+  },
+  liveData: {
+    schema: [['data', true, [['surveyId', true, 'integer']]]],
+    async method (ctx) {
+      const {
+        data: { surveyId }
+      } = ctx.request.body
+
+      const survey = await Survey.findOne({ where: { id: surveyId } })
+      if (!survey) {
+        return Bluebird.reject([
+          { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
+        ])
+      }
+
+      let message = '-------------------------------------\n'
+
+      message += "PARTICIPANTS' INTERACTION INFO:\n"
+      const participants = {
+        intro: 0,
+        initiated: 0,
+        in_progress: 0,
+        completed: 0
+      }
+
+      const participantSurveys = await ParticipantSurvey.findAll()
+      for (const { status } of participantSurveys) {
+        participants[status] += 1
+      }
+
+      if (participants.intro) {
+        message += `Intro sent - count [${participants.intro}]\n`
+      }
+      if (participants.initiated) {
+        message += `Initiated - count [${participants.initiated}]\n`
+      }
+      if (participants.in_progress) {
+        message += `Currently filling - count [${participants.in_progress}]\n`
+      }
+      if (participants.completed) {
+        message += `Completed - count [${participants.completed}]\n`
+      }
+
+      // Get Incentive Cost
+      let totalAmount = 0
+      let phoneNumbers = []
+      const successfulIncentives = await IncentiveRecord.findAll({
+        where: { surveyId, status: 'Success' }
+      })
+      for (const { amount, phone } of successfulIncentives) {
+        totalAmount += parseInt(amount.split(' ')[1])
+        phoneNumbers.push(phone)
+      }
+      message += `\nTotal Incentives Sent Successfully - count [${totalAmount} ${
+        survey.currency
+      }], phone numbers [${phoneNumbers.join()}] `
+
+      ctx.body = { data: { participants }, message }
     }
   }
 })
