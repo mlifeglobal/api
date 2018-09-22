@@ -9,7 +9,9 @@ module.exports = (
   PredefinedAnswer,
   lodash,
   request,
-  config
+  config,
+  csvWriter,
+  fs
 ) => ({
   create: {
     schema: [
@@ -680,6 +682,68 @@ module.exports = (
       }
 
       ctx.body = { message }
+    }
+  },
+  saveData: {
+    schema: [['data', true, [['surveyId', true, 'integer']]]],
+    async method (ctx) {
+      const {
+        data: { surveyId }
+      } = ctx.request.body
+
+      const writer = csvWriter({
+        path: 'participantAnswers.csv',
+        header: [
+          {id: 'qid', title: 'Question ID'},
+          {id: 'question', title: 'Question'},
+          {id: 'pid', title: 'Participant ID'},
+          {id: 'phone', title: 'Participant Phone'},
+          {id: 'answer', title: 'Participant Answer'}
+        ]
+      })
+
+      let records = []
+      const questions = await Question.findAll({
+        where: { surveyId },
+        order: [['order']]
+      })
+      for (const { id: questionId, question, questionType } of questions) {
+
+        const participantAnswers = await ParticipantAnswer.findAll({
+          where: { questionId }
+        })
+        for (const { participantId, answers } of participantAnswers) {
+          let tmpRow = {}
+          tmpRow.qid = questionId
+          tmpRow.question = question
+
+          let answer = answers[0]
+          if (questionType === 'mcq') {
+            const prefedefinedAnswers = await PredefinedAnswer.findAll({
+              where: { answerKey: { [Sequelize.Op.in]: answers } }
+            })
+            answer = prefedefinedAnswers
+              .map(({ answerValue }) => answerValue)
+              .join()
+          }
+
+          const participant = await Participant.findOne({
+            where: { id: participantId }
+          })
+          tmpRow.pid = participantId
+          tmpRow.phone = participant
+            ? participant.phone
+            : participant.facebookId
+              ? participant.facebookId
+              : 'unknown'
+
+          tmpRow.answer = answer
+          records.push(tmpRow)
+        }
+      }
+      console.log(records)
+      await writer.writeRecords(records)
+      ctx.body = { }
     }
   }
 })

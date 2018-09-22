@@ -1,4 +1,4 @@
-module.exports = (Question, Survey, request, config, Bluebird) => ({
+module.exports = (Question, Survey, request, config, Bluebird, fs) => ({
   createSurvey: {
     async method (ctx) {
       const { token, text, trigger_id } = ctx.request.body
@@ -819,7 +819,51 @@ module.exports = (Question, Survey, request, config, Bluebird) => ({
       ctx.body = ''
     }
   },
+  getParticipantDataFile: {
+    async method (ctx) {
+      const { token, text } = ctx.request.body
 
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+
+      if (!text) {
+        ctx.body = 'Correct syntax: /getparticipantdatafile [surveyID]'
+        return
+      }
+
+      const survey = await Survey.findOne({ where: { id: text } })
+      if (!survey) {
+        return Bluebird.reject([{ key: 'Error', value: `Survey not found` }])
+      }
+
+      await request.post({
+        uri: `${config.constants.URL}/admin/participant-save-data`,
+        body: {
+          secret: process.env.apiSecret,
+          data: { surveyId: survey.id }
+        },
+        json: true
+      })
+
+      const response = await request.post({
+        uri: `${config.constants.SLACK_API}/files.upload`,
+        headers: {
+          Authorization: `Bearer ${process.env.slackAccessToken}`
+        },
+        formData: {
+          'file': fs.createReadStream('participantAnswers.csv'),
+          'channels': process.env.slackChannel,
+          'initial_comment': 'Participant Answers'
+        }
+      })
+
+      console.log(response)
+      ctx.body = ''
+    }
+  },
   commandResponse: {
     async method (ctx) {
       const body = JSON.parse(ctx.request.body.payload)

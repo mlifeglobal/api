@@ -1,4 +1,4 @@
 module.exports = {
   benchmark: true,
-  database: 'mlife_development'
+  database: 'mlife_production'
 }
