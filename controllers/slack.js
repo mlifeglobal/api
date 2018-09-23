@@ -854,9 +854,9 @@ module.exports = (Question, Survey, request, config, Bluebird, fs) => ({
           Authorization: `Bearer ${process.env.slackAccessToken}`
         },
         formData: {
-          'file': fs.createReadStream('participantAnswers.csv'),
-          'channels': process.env.slackChannel,
-          'initial_comment': 'Participant Answers'
+          file: fs.createReadStream('participantAnswers.csv'),
+          channels: process.env.slackChannel,
+          initial_comment: 'Participant Answers'
         }
       })
 

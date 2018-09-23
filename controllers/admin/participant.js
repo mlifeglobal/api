@@ -564,7 +564,8 @@ module.exports = (
         participantId,
         surveyId,
         questionId,
-        answers: answersToStore
+        answers: answersToStore,
+        demographics: question.demographicsKey
       })
 
       // Merge new skip questions with already skipped ones

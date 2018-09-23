@@ -32,6 +32,10 @@ module.exports = Sequelize => ({
       },
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE'
+    },
+    demographicsKey: {
+      type: Sequelize.STRING,
+      field: 'demographics_key'
     }
   },
   hooks: {

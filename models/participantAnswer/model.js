@@ -38,6 +38,10 @@ module.exports = Sequelize => ({
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE'
     },
+    demographics: {
+      type: Sequelize.STRING,
+      field: 'demographics'
+    },
     createdDate: {
       type: Sequelize.DATE,
       field: 'created_date'
