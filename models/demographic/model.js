@@ -16,6 +16,10 @@ module.exports = Sequelize => ({
     validation: {
       type: Sequelize.STRING,
       field: 'validation'
+    },
+    validationMsg: {
+      type: Sequelize.STRING,
+      field: 'validation_message'
     }
   }
 })

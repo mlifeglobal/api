@@ -11,7 +11,7 @@ module.exports = (
   request,
   config,
   csvWriter,
-  fs
+  Demographic
 ) => ({
   create: {
     schema: [
@@ -558,7 +558,16 @@ module.exports = (
         }
         return
       }
-
+      if (question.demographicsKey) {
+        const demographic = await Demographic.findOne({where: {key: question.demographicsKey}})
+        if (demographic) {
+          var re = new RegExp(demographic.validation)
+          if (!re.test(answersToStore)) {
+            ctx.body = {data: {reply: demographic.validationMsg}}
+            return
+          }
+        }
+      }
       // Create ParticipantAnswer record
       await ParticipantAnswer.create({
         participantId,
@@ -709,7 +718,6 @@ module.exports = (
         order: [['order']]
       })
       for (const { id: questionId, question, questionType } of questions) {
-
         const participantAnswers = await ParticipantAnswer.findAll({
           where: { questionId }
         })

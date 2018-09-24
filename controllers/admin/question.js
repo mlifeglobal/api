@@ -451,11 +451,11 @@ module.exports = (
   },
 
   createDemographics: {
-    schema: [['data', true, [['key', true], ['validation']]]],
+    schema: [['data', true, [['key', true], ['validation'], ['validationMsg']]]],
 
-    async method(ctx) {
+    async method (ctx) {
       const {
-        data: { key, validation }
+        data: { key, validation, validationMsg }
       } = ctx.request.body
 
       if (!key) {
@@ -466,14 +466,15 @@ module.exports = (
 
       await Demographic.create({
         key,
-        validation
+        validation,
+        validationMsg
       })
 
       ctx.body = {
         data: `The demographic for ${key} has been successfully created`
       }
     },
-    onError(error) {
+    onError (error) {
       if (error instanceof Sequelize.UniqueConstraintError) {
         const field = Object.keys(error.fields)
 
