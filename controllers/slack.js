@@ -677,6 +677,94 @@ module.exports = (Question, Survey, request, config, Bluebird, fs) => ({
     }
   },
 
+  createDemographic: {
+    async method (ctx) {
+      const { token, trigger_id } = ctx.request.body
+
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+
+      const dialogObj = {
+        trigger_id: trigger_id,
+        dialog: JSON.stringify({
+          title: 'Create Demographics',
+          callback_id: 'admin/question-create-demographics',
+          submit_label: 'Submit',
+          elements: [
+            {
+              label: 'Demographic key',
+              type: 'text',
+              name: 'key',
+              placeholder: 'Must be unique'
+            },
+            {
+              label: 'Validation',
+              type: 'textarea',
+              name: 'validation',
+              placeholder: 'Regular Expression for validation',
+              optional: true
+            },
+            {
+              label: 'Validation Message',
+              type: 'textarea',
+              name: 'validationMsg',
+              placeholder: 'Validation error message',
+              optional: true
+            }
+          ]
+        })
+      }
+      // open the dialog by calling dialogs.open method and sending the payload
+      await request.post({
+        uri: `${config.constants.URL}/slack-open-dialog`,
+        body: dialogObj,
+        json: true
+      })
+      ctx.body = ''
+    }
+  },
+  attachDemographic: {
+    async method (ctx) {
+      const { token, trigger_id } = ctx.request.body
+
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+
+      const dialogObj = {
+        trigger_id: trigger_id,
+        dialog: JSON.stringify({
+          title: 'Attach Demographics',
+          callback_id: 'admin/question-attach-demographics',
+          submit_label: 'Submit',
+          elements: [
+            {
+              label: 'Question ID',
+              type: 'text',
+              name: 'questionId'
+            },
+            {
+              label: 'Demographic key',
+              type: 'text',
+              name: 'demographicsKey'
+            }
+          ]
+        })
+      }
+      // open the dialog by calling dialogs.open method and sending the payload
+      await request.post({
+        uri: `${config.constants.URL}/slack-open-dialog`,
+        body: dialogObj,
+        json: true
+      })
+      ctx.body = ''
+    }
+  },
   getQuestions: {
     async method (ctx) {
       const { token, text } = ctx.request.body
@@ -910,6 +998,7 @@ module.exports = (Question, Survey, request, config, Bluebird, fs) => ({
         json: true
       })
 
+      console.log(response.data)
       await request.post({
         uri: process.env.slackWebhookURL,
         body: { text: response.data },

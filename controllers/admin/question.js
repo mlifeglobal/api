@@ -491,7 +491,7 @@ module.exports = (
         [['questionId', true, 'integer'], ['demographicsKey', true]]
       ]
     ],
-    async method(ctx) {
+    async method (ctx) {
       const {
         data: { questionId, demographicsKey }
       } = ctx.request.body
@@ -499,21 +499,17 @@ module.exports = (
       const question = await Question.findOne({ where: { id: questionId } })
 
       if (!question) {
-        return Bluebird.reject([
-          { key: 'question', value: `Question not found for ID: ${questionId}` }
-        ])
+        ctx.body = {data: `Question not found for ID: ${questionId}`}
+        return
       }
 
       const demographic = await Demographic.findOne({
         where: { key: demographicsKey }
       })
       if (!demographic) {
-        return Bluebird.reject([
-          {
-            key: 'demographic',
-            value: `demographic not found for key: ${demographicsKey}`
-          }
-        ])
+        ctx.body = {data: `Demographic not found for key: ${demographicsKey}`}
+
+        return
       }
 
       await question.update({demographicsKey: demographicsKey})
