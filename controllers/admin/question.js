@@ -4,7 +4,8 @@ module.exports = (
   Survey,
   Question,
   PredefinedAnswer,
-  Demographic
+  Demographic,
+  lodash
 ) => ({
   create: {
     schema: [
@@ -91,6 +92,69 @@ module.exports = (
       await Question.destroy({ where: { id: questionId } })
 
       ctx.body = { data: { questionId } }
+    }
+  },
+  publish: {
+    schema: [
+      [
+        'data',
+        true,
+        [['questionId', true, 'integer'], ['platforms', true, 'array']]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { questionId, platforms }
+      } = ctx.request.body
+
+      const question = await Question.findOne({ where: { id: questionId } })
+      if (!question) {
+        return Bluebird.reject([
+          { key: 'question', value: `Question not found for ID: ${questionId}` }
+        ])
+      }
+
+      await question.update({
+        platforms: lodash.union(question.platforms, platforms)      })
+
+      ctx.body = {
+        data: `Qurvey has succesfully published for id: ${question.id}`
+      }
+    }
+  },
+  unpublish: {
+    schema: [
+      [
+        'data',
+        true,
+        [['questionId', true, 'integer'], ['platforms', true, 'array']]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { questionId, platforms }
+      } = ctx.request.body
+
+      const question = await Question.findOne({ where: { id: questionId } })
+      if (!question) {
+        return Bluebird.reject([
+          { key: 'question', value: `Question not found for ID: ${questionId}` }
+        ])
+      }
+
+      const updatedPlatforms = lodash.remove(
+        question.platforms,
+        platform => !platforms.includes(platform)
+      )
+      await question.update({
+        platforms: updatedPlatforms
+      })
+
+      ctx.body = {
+        data: `Question has succesfully unpublished from ${platforms} for id: ${
+          question.id
+        }`
+      }
     }
   },
   deleteAnswer: {

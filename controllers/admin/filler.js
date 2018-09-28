@@ -177,7 +177,7 @@ module.exports = (request, config, Sequelize, Bluebird, Message, Constant) => ({
         uri: `${config.constants.URL}/admin/participant-get-question`,
         body: {
           secret: process.env.apiSecret,
-          data: { participantId, surveyId }
+          data: { participantId, surveyId, platform: distributionPlatform }
         },
         json: true
       })
@@ -196,7 +196,13 @@ module.exports = (request, config, Sequelize, Bluebird, Message, Constant) => ({
           uri: `${config.constants.URL}/admin/participant-save-answer`,
           body: {
             secret: process.env.apiSecret,
-            data: { participantId, surveyId, questionId, answers: [message] }
+            data: {
+              participantId,
+              surveyId,
+              questionId,
+              platform: distributionPlatform,
+              answers: [message]
+            }
           },
           json: true
         })
