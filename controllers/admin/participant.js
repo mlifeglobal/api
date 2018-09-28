@@ -438,7 +438,7 @@ module.exports = (
     ],
     async method (ctx) {
       const {
-        data: { participantId, surveyId, questionId, answers: rawAnswers,platform }
+        data: { participantId, surveyId, questionId, answers: rawAnswers, platform }
       } = ctx.request.body
 
       const participant = await Participant.findOne({
@@ -565,12 +565,17 @@ module.exports = (
       }
       if (question.demographicsKey) {
         const demographic = await Demographic.findOne({where: {key: question.demographicsKey}})
-        if (demographic) {
+        if (demographic.validation) {
           var re = new RegExp(demographic.validation)
           if (!re.test(answersToStore)) {
             ctx.body = {data: {reply: demographic.validationMsg}}
             return
           }
+        }
+
+        // save phone number for facebook users
+        if (demographic.key === 'phone' && platform === 'facebook') {
+          await Participant.update({phone: answersToStore[0]}, {where: {id: participantId}})
         }
       }
       // Create ParticipantAnswer record
@@ -590,7 +595,7 @@ module.exports = (
         where: {
           id: { [Sequelize.Op.notIn]: questionsToSkip },
           survey_id: surveyId,
-          [Sequelize.Op.or] : [{platforms:[]}, {platforms: { [Sequelize.Op.contains]: [platform] }}],
+          [Sequelize.Op.or]: [{platforms: []}, {platforms: { [Sequelize.Op.contains]: [platform] }}],
           order: { [Sequelize.Op.gt]: question.order }
         },
         order: [['order', 'ASC']]
@@ -651,6 +656,7 @@ module.exports = (
           reply: nextQuestion ? undefined : survey.completionString
         }
       }
+      
     }
   },
 
