@@ -465,7 +465,9 @@ module.exports = (
         completed: 0
       }
 
-      const participantSurveys = await ParticipantSurvey.findAll()
+      const participantSurveys = await ParticipantSurvey.findAll({
+        where: { surveyId }
+      })
       for (const { status } of participantSurveys) {
         participants[status] += 1
       }
