@@ -1,7 +1,7 @@
 module.exports = (twilio, request, config) => ({
   receive: {
     async method (ctx) {
-      const { From: phone, Body: msg } = ctx.request.body
+      const { From: phone, To: mlifePhone, Body: msg } = ctx.request.body
 
       const {
         data: { reply }
@@ -24,6 +24,7 @@ module.exports = (twilio, request, config) => ({
           body: {
             data: {
               phone,
+              from: mlifePhone,
               message: reply
             }
           },
@@ -36,14 +37,14 @@ module.exports = (twilio, request, config) => ({
   },
 
   send: {
-    schema: [['data', true, [['phone', true], ['message', true]]]],
+    schema: [['data', true, [['phone', true], ['from'], ['message', true]]]],
     async method (ctx) {
       const {
-        data: { phone, message }
+        data: { phone, from: mlifePhone, message }
       } = ctx.request.body
 
       twilio.messages.create({
-        from: process.env.twilioNumber,
+        from: mlifePhone || process.env.twilioCanadaNumber,
         to: phone,
         body: message
       })
