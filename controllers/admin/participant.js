@@ -10,8 +10,7 @@ module.exports = (
   lodash,
   request,
   config,
-  csvWriter,
-  fs
+  csvWriter
 ) => ({
   create: {
     schema: [
@@ -694,11 +693,11 @@ module.exports = (
       const writer = csvWriter({
         path: 'participantAnswers.csv',
         header: [
-          {id: 'qid', title: 'Question ID'},
-          {id: 'question', title: 'Question'},
-          {id: 'pid', title: 'Participant ID'},
-          {id: 'phone', title: 'Participant Phone'},
-          {id: 'answer', title: 'Participant Answer'}
+          { id: 'qid', title: 'Question ID' },
+          { id: 'question', title: 'Question' },
+          { id: 'pid', title: 'Participant ID' },
+          { id: 'phone', title: 'Participant Phone' },
+          { id: 'answer', title: 'Participant Answer' }
         ]
       })
 
@@ -708,7 +707,6 @@ module.exports = (
         order: [['order']]
       })
       for (const { id: questionId, question, questionType } of questions) {
-
         const participantAnswers = await ParticipantAnswer.findAll({
           where: { questionId }
         })
@@ -743,7 +741,7 @@ module.exports = (
       }
       console.log(records)
       await writer.writeRecords(records)
-      ctx.body = { }
+      ctx.body = {}
     }
   }
 })
