@@ -10,7 +10,8 @@ module.exports = (
   lodash,
   request,
   config,
-  csvWriter
+  csvWriter,
+  Demographic
 ) => ({
   create: {
     schema: [
@@ -322,12 +323,16 @@ module.exports = (
       [
         'data',
         true,
-        [['participantId', true, 'integer'], ['surveyId', true, 'integer']]
+        [
+          ['participantId', true, 'integer'],
+          ['surveyId', true, 'integer'],
+          ['platform']
+        ]
       ]
     ],
     async method (ctx) {
       const {
-        data: { participantId, surveyId }
+        data: { participantId, surveyId, platform }
       } = ctx.request.body
 
       const participant = await Participant.findOne({
@@ -367,7 +372,13 @@ module.exports = (
 
       if (lastQuestionId) {
         const lastQuestion = await Question.findOne({
-          where: { id: lastQuestionId }
+          where: {
+            id: lastQuestionId,
+            [Sequelize.Op.or]: [
+              { platforms: [] },
+              { platforms: { [Sequelize.Op.contains]: [platform] } }
+            ]
+          }
         })
         if (!lastQuestion) {
           return Bluebird.reject([
@@ -383,6 +394,10 @@ module.exports = (
           where: {
             id: { [Sequelize.Op.notIn]: alreadySkipped },
             survey_id: surveyId,
+            [Sequelize.Op.or]: [
+              { platforms: [] },
+              { platforms: { [Sequelize.Op.contains]: [platform] } }
+            ],
             order: { [Sequelize.Op.gt]: lastQuestion.order }
           },
           order: [['order', 'ASC']]
@@ -393,7 +408,13 @@ module.exports = (
       } else {
         // Get first question
         const firstQuestion = await Question.findOne({
-          where: { survey_id: surveyId },
+          where: {
+            survey_id: surveyId,
+            [Sequelize.Op.or]: [
+              { platforms: [] },
+              { platforms: { [Sequelize.Op.contains]: [platform] } }
+            ]
+          },
           order: [['order', 'ASC']]
         })
         if (!firstQuestion) {
@@ -426,13 +447,20 @@ module.exports = (
           ['participantId', true, 'integer'],
           ['surveyId', true, 'integer'],
           ['questionId', true, 'integer'],
-          ['answers', true, 'array']
+          ['answers', true, 'array'],
+          ['platform']
         ]
       ]
     ],
     async method (ctx) {
       const {
-        data: { participantId, surveyId, questionId, answers: rawAnswers }
+        data: {
+          participantId,
+          surveyId,
+          questionId,
+          answers: rawAnswers,
+          platform
+        }
       } = ctx.request.body
 
       const participant = await Participant.findOne({
@@ -557,13 +585,33 @@ module.exports = (
         }
         return
       }
+      if (question.demographicsKey) {
+        const demographic = await Demographic.findOne({
+          where: { key: question.demographicsKey }
+        })
+        if (demographic.validation) {
+          var re = new RegExp(demographic.validation)
+          if (!re.test(answersToStore)) {
+            ctx.body = { data: { reply: demographic.validationMsg } }
+            return
+          }
+        }
 
+        // save phone number for facebook users
+        if (demographic.key === 'phone' && platform === 'facebook') {
+          await Participant.update(
+            { phone: answersToStore[0] },
+            { where: { id: participantId } }
+          )
+        }
+      }
       // Create ParticipantAnswer record
       await ParticipantAnswer.create({
         participantId,
         surveyId,
         questionId,
-        answers: answersToStore
+        answers: answersToStore,
+        demographics: question.demographicsKey
       })
 
       // Merge new skip questions with already skipped ones
@@ -574,6 +622,10 @@ module.exports = (
         where: {
           id: { [Sequelize.Op.notIn]: questionsToSkip },
           survey_id: surveyId,
+          [Sequelize.Op.or]: [
+            { platforms: [] },
+            { platforms: { [Sequelize.Op.contains]: [platform] } }
+          ],
           order: { [Sequelize.Op.gt]: question.order }
         },
         order: [['order', 'ASC']]

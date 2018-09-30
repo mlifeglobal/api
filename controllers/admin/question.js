@@ -1,4 +1,12 @@
-module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
+module.exports = (
+  Sequelize,
+  Bluebird,
+  Survey,
+  Question,
+  PredefinedAnswer,
+  Demographic,
+  lodash
+) => ({
   create: {
     schema: [
       [
@@ -13,7 +21,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
         ]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: {
           question,
@@ -69,7 +77,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
   },
   delete: {
     schema: [['data', true, [['questionId', true, 'integer']]]],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { questionId }
       } = ctx.request.body
@@ -86,6 +94,69 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
       ctx.body = { data: { questionId } }
     }
   },
+  publish: {
+    schema: [
+      [
+        'data',
+        true,
+        [['questionId', true, 'integer'], ['platforms', true, 'array']]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { questionId, platforms }
+      } = ctx.request.body
+
+      const question = await Question.findOne({ where: { id: questionId } })
+      if (!question) {
+        return Bluebird.reject([
+          { key: 'question', value: `Question not found for ID: ${questionId}` }
+        ])
+      }
+
+      await question.update({
+        platforms: lodash.union(question.platforms, platforms)      })
+
+      ctx.body = {
+        data: `Qurvey has succesfully published for id: ${question.id}`
+      }
+    }
+  },
+  unpublish: {
+    schema: [
+      [
+        'data',
+        true,
+        [['questionId', true, 'integer'], ['platforms', true, 'array']]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { questionId, platforms }
+      } = ctx.request.body
+
+      const question = await Question.findOne({ where: { id: questionId } })
+      if (!question) {
+        return Bluebird.reject([
+          { key: 'question', value: `Question not found for ID: ${questionId}` }
+        ])
+      }
+
+      const updatedPlatforms = lodash.remove(
+        question.platforms,
+        platform => !platforms.includes(platform)
+      )
+      await question.update({
+        platforms: updatedPlatforms
+      })
+
+      ctx.body = {
+        data: `Question has succesfully unpublished from ${platforms} for id: ${
+          question.id
+        }`
+      }
+    }
+  },
   deleteAnswer: {
     schema: [
       [
@@ -98,7 +169,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
         ]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { questionId, answerId, answerKey }
       } = ctx.request.body
@@ -157,7 +228,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
         ]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: {
           questionId,
@@ -227,7 +298,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
         [['questionId1', true, 'integer'], ['questionId2', true, 'integer']]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { questionId1, questionId2 }
       } = ctx.request.body
@@ -279,7 +350,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
         ]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { predefinedAnswerId, skipQuestions }
       } = ctx.request.body
@@ -321,7 +392,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
         ]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { questionId, skipQuestions, option }
       } = ctx.request.body
@@ -372,7 +443,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
         [['questionId', true, 'integer'], ['replaceQuestionText', 'boolean']]
       ]
     ],
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { questionId, replaceQuestionText }
       } = ctx.request.body
@@ -414,7 +485,7 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
   getPredefAnswers: {
     schema: [['data', true, [['questionId', true, 'integer']]]],
 
-    async method (ctx) {
+    async method(ctx) {
       const {
         data: { questionId }
       } = ctx.request.body
@@ -439,6 +510,75 @@ module.exports = (Sequelize, Bluebird, Survey, Question, PredefinedAnswer) => ({
 
       ctx.body = {
         data: { answers }
+      }
+    }
+  },
+
+  createDemographics: {
+    schema: [['data', true, [['key', true], ['validation'], ['validationMsg']]]],
+
+    async method (ctx) {
+      const {
+        data: { key, validation, validationMsg }
+      } = ctx.request.body
+
+      if (!key) {
+        return Bluebird.reject([
+          { key: 'demographic_key', value: `Key cannot be null` }
+        ])
+      }
+
+      await Demographic.create({
+        key,
+        validation,
+        validationMsg
+      })
+
+      ctx.body = {
+        data: `The demographic for ${key} has been successfully created`
+      }
+    },
+    onError (error) {
+      if (error instanceof Sequelize.UniqueConstraintError) {
+        const field = Object.keys(error.fields)
+
+        return [{ key: field, value: `This key is already taken.` }]
+      }
+    }
+  },
+
+  attachDemographics: {
+    schema: [
+      [
+        'data',
+        true,
+        [['questionId', true, 'integer'], ['demographicsKey', true]]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { questionId, demographicsKey }
+      } = ctx.request.body
+
+      const question = await Question.findOne({ where: { id: questionId } })
+
+      if (!question) {
+        ctx.body = {data: `Question not found for ID: ${questionId}`}
+        return
+      }
+
+      const demographic = await Demographic.findOne({
+        where: { key: demographicsKey }
+      })
+      if (!demographic) {
+        ctx.body = {data: `Demographic not found for key: ${demographicsKey}`}
+
+        return
+      }
+
+      await question.update({demographicsKey: demographicsKey})
+      ctx.body = {
+        data: `Demographic ${demographicsKey} has been attached to question: ${questionId}`
       }
     }
   }

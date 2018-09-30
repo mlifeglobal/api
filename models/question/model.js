@@ -16,6 +16,11 @@ module.exports = Sequelize => ({
       type: Sequelize.STRING,
       field: 'question'
     },
+    platforms: {
+      type: Sequelize.ARRAY(Sequelize.STRING),
+      defaultValue: [],
+      field: 'platforms'
+    },
     order: {
       type: Sequelize.INTEGER,
       autoIncrement: false,
@@ -32,6 +37,10 @@ module.exports = Sequelize => ({
       },
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE'
+    },
+    demographicsKey: {
+      type: Sequelize.STRING,
+      field: 'demographics_key'
     }
   },
   hooks: {
