@@ -26,6 +26,7 @@
     "node-schedule": "^1.2.4",
     "request": "2",
     "request-promise": "4",
+    "shortid": "^2.2.13",
     "twilio": "^3.19.1"
   },
   "devDependencies": {

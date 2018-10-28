@@ -54,6 +54,17 @@ module.exports = (Sequelize, lodash) => ({
       defaultValue: [],
       field: 'platforms'
     },
+    clientID: {
+      type: Sequelize.INTEGER,
+      defaultValue: 1,
+      field: 'client_id',
+      references: {
+        model: 'clients',
+        key: 'id'
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE'
+    },
     createdDate: {
       type: Sequelize.DATE,
       field: 'created_date'
@@ -95,7 +106,8 @@ module.exports = (Sequelize, lodash) => ({
   instanceMethods: {},
   associations: {
     hasMany: 'Question',
-    belongsToMany: { model: 'Participant', through: 'participant_surveys' }
+    belongsToMany: { model: 'Participant', through: 'participant_surveys' },
+    belongsTo: 'Client'
   },
   hooks: {},
   indexes: [],

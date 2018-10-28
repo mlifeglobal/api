@@ -6,9 +6,10 @@ const scheduler = require('node-schedule')
 const Twilio = require('twilio')
 const AfricasTalking = require('africastalking')
 const asyncBusboy = require('async-busboy')
-var csv = require('csvtojson')
-var fs = require('fs')
+const csv = require('csvtojson')
+const fs = require('fs')
 const csvWriter = require('csv-writer').createObjectCsvWriter
+const shortid = require('shortid')
 
 const twilio = new Twilio(process.env.twilioSID, process.env.twilioToken)
 const africasTalking = AfricasTalking({
@@ -27,5 +28,6 @@ module.exports = {
   asyncBusboy,
   csv,
   fs,
-  csvWriter
+  csvWriter,
+  shortid
 }
