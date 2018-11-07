@@ -1,4 +1,4 @@
-module.exports = (request, config) => ({
+module.exports = (request, config, Configs, Bluebird) => ({
   receive: {
     async method (ctx) {
       const { object, entry } = ctx.request.body
@@ -10,6 +10,8 @@ module.exports = (request, config) => ({
           message: messageObj,
           postback: postbackObj
         } = messaging[0]
+
+        const pageId = entry[0].id
 
         if (messageObj) {
           const { mid: messageId, text: msg } = messageObj
@@ -46,6 +48,7 @@ module.exports = (request, config) => ({
               uri: `${config.constants.URL}/facebook-send`,
               body: {
                 data: {
+                  pageId,
                   facebookId: senderId,
                   message: reply,
                   quickReplies
@@ -62,6 +65,7 @@ module.exports = (request, config) => ({
               uri: `${config.constants.URL}/facebook-send`,
               body: {
                 data: {
+                  pageId,
                   facebookId: senderId,
                   message:
                     'Welcome, please reply with valid opt in code to start filling surveys.'
@@ -82,12 +86,17 @@ module.exports = (request, config) => ({
       [
         'data',
         true,
-        [['facebookId', true], ['message', true], ['quickReplies', 'array']]
+        [
+          ['pageId', true],
+          ['facebookId', true],
+          ['message', true],
+          ['quickReplies', 'array']
+        ]
       ]
     ],
     async method (ctx) {
       const {
-        data: { facebookId, message, quickReplies }
+        data: { pageId, facebookId, message, quickReplies }
       } = ctx.request.body
 
       const messageData = { text: message }
@@ -95,9 +104,18 @@ module.exports = (request, config) => ({
         messageData['quick_replies'] = quickReplies
       }
 
+      let token = await Configs.findOne({ where: { key: pageId } })
+      if (!token) {
+        return Bluebird.reject([
+          {
+            key: 'token',
+            value: 'The bot has not been subscribed to this page'
+          }
+        ])
+      }
       await request.post({
         uri: `${config.constants.FACEBOOK_API}/messages?access_token=${
-          process.env.facebookPageAccessToken
+          token.value
         }`,
         body: {
           recipient: {

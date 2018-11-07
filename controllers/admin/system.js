@@ -1,4 +1,4 @@
-module.exports = (Survey, ParticipantSurvey, ParticipantAnswer) => ({
+module.exports = (Survey, ParticipantSurvey, ParticipantAnswer, Configs) => ({
   info: {
     async method (ctx) {
       let message = '-------------------------------------\n'
@@ -65,6 +65,31 @@ module.exports = (Survey, ParticipantSurvey, ParticipantAnswer) => ({
       message += `\nTotal Data Points: ${dataPointsCount}`
 
       ctx.body = { data: { surveys, participants, dataPointsCount }, message }
+    }
+  },
+  configUpload: {
+    schema: [
+      [
+        'data',
+        true,
+        [['key', true], ['description', true], ['value', true], ['token']]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { key, description, value, token }
+      } = ctx.request.body
+
+      await Configs.create({
+        key,
+        description,
+        value,
+        token
+      })
+
+      ctx.body = {
+        data: `Config has been succesfully added for: ${description}`
+      }
     }
   }
 })

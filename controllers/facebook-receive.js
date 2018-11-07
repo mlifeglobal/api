@@ -1,4 +1,4 @@
-module.exports = (Bluebird, twilio, request, config) => ({
+module.exports = (Bluebird, twilio, request, Configs) => ({
   type: 'get',
   async method (ctx) {
     const params = {}
@@ -10,7 +10,10 @@ module.exports = (Bluebird, twilio, request, config) => ({
         params[key] = value
       })
 
-    if (params['hub.verify_token'] !== process.env.facebookVerifyToken) {
+    const config = await Configs.findOne({
+      where: { token: params['hub.verify_token'] }
+    })
+    if (!config) {
       return Bluebird.reject([
         { key: 'token', value: 'Incorrect verification code provided' }
       ])
