@@ -15,11 +15,11 @@ module.exports = (
 ) => ({
   create: {
     schema: [
-      ['data', true, [['phone'], ['facebookId'], ['fromWhatsapp', 'boolean']]]
+      ['data', true, [['phone'], ['facebookId'], ['fromWhatsapp', 'boolean'],['fbPageId']]]
     ],
     async method (ctx) {
       const {
-        data: { phone, facebookId, fromWhatsapp }
+        data: { phone, facebookId, fromWhatsapp, fbPageId }
       } = ctx.request.body
 
       if (!phone && !facebookId) {
@@ -30,16 +30,51 @@ module.exports = (
           }
         ])
       }
-
+      console.log(facebookId, fbPageId)
+      let participant = null
       const participantFindObj = {}
+      // Create/retrieve participant using phone number
       if (phone) {
         participantFindObj.phone = phone
+
+        participant = await Participant.findOne({ where: participantFindObj })
+        if (!participant) {
+          participant = await Participant.create({
+            phone,
+            facebookId,
+            hasWhatsapp: fromWhatsapp && true
+          })
+        } else if (fromWhatsapp) {
+          participant.update({ hasWhatsapp: true })
+        }
       }
+      // Check for multiple page ids
       if (facebookId) {
-        participantFindObj.facebookId = facebookId
+        participant = await Participant.findOne({ where: {facebookId: {[Sequelize.Op.like]: `% ${facebookId},%`}} })
+        if (!participant) {
+
+          const {fbIds} = await request.post({
+            uri: `${config.constants.URL}/facebook-get-page-ids`,
+            body: {
+              data: {
+                fbPageId,
+                facebookId
+              }
+            },
+            json: true
+          })
+
+          participant = await Participant.create({
+            phone,
+            facebookId: fbIds,
+            hasWhatsapp: fromWhatsapp && true
+          })
+        } else if (fromWhatsapp) {
+          participant.update({ hasWhatsapp: true })
+        }
       }
 
-      let participant = await Participant.findOne({ where: participantFindObj })
+      participant = await Participant.findOne({ where: participantFindObj })
       if (!participant) {
         participant = await Participant.create({
           phone,

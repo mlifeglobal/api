@@ -2,7 +2,6 @@ module.exports = (request, config, Configs, Bluebird) => ({
   receive: {
     async method (ctx) {
       const { object, entry } = ctx.request.body
-
       if (object === 'page') {
         const { messaging } = entry[0]
         const {
@@ -26,6 +25,7 @@ module.exports = (request, config, Configs, Bluebird) => ({
                 identifier: senderId,
                 message: msg,
                 platform: 'facebook',
+                fbPageId: pageId,
                 messageIdentifier: messageId
               }
             },
@@ -113,8 +113,9 @@ module.exports = (request, config, Configs, Bluebird) => ({
           }
         ])
       }
+
       await request.post({
-        uri: `${config.constants.FACEBOOK_API}/messages?access_token=${
+        uri: `${config.constants.FACEBOOK_API}/me/messages?access_token=${
           token.value
         }`,
         body: {
@@ -127,6 +128,39 @@ module.exports = (request, config, Configs, Bluebird) => ({
       })
 
       ctx.body = {}
+    }
+  },
+  getPageIds: {
+    schema: ['data', true, [['facebookId'], ['fbPageId']]],
+
+    async method (ctx) {
+      const {
+        data: { facebookId, fbPageId }
+      } = ctx.request.body
+
+      let token = await Configs.findOne({ where: { key: fbPageId } })
+      if (!token) {
+        return Bluebird.reject([
+          {
+            key: 'token',
+            value: 'The bot has not been subscribed to this page'
+          }
+        ])
+      }
+
+      const ids = await request.get({
+        uri: `${
+          config.constants.FACEBOOK_API
+        }/${facebookId}/ids_for_pages?access_token=${token.value}`,
+        json: true
+      })
+
+      let fbIds = ''
+      for (var pid of ids.data) {
+        fbIds += ` ${pid.id}, `
+      }
+
+      ctx.body = { fbIds }
     }
   }
 })

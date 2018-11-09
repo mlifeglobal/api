@@ -8,13 +8,14 @@ module.exports = (request, config, Sequelize, Bluebird, Message, Constant) => ({
           ['platform', true],
           ['identifier', true],
           ['message', true],
-          ['messageIdentifier', 'string']
+          ['messageIdentifier', 'string'],
+          ['fbPageId']
         ]
       ]
     ],
     async method (ctx) {
       const {
-        data: { platform, identifier, message, messageIdentifier }
+        data: { platform, identifier, message, messageIdentifier, fbPageId }
       } = ctx.request.body
 
       // Check against supported platforms
@@ -47,6 +48,7 @@ module.exports = (request, config, Sequelize, Bluebird, Message, Constant) => ({
       const participantData = {}
       participantData[identifierColumn] = identifier
       participantData.fromWhatsapp = platform === 'whatsapp'
+      participantData.fbPageId = fbPageId
 
       const {
         data: { participantId }
