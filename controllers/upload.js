@@ -6,7 +6,8 @@ module.exports = (
   request,
   asyncBusboy,
   Bluebird,
-  fs
+  fs,
+  s3
 ) => ({
   surveyCsv: {
     async method (ctx) {
@@ -122,6 +123,66 @@ module.exports = (
         }
       }
       ctx.body = { data: obj }
+    }
+  },
+
+  attachment: {
+    async method (ctx) {
+      const {
+        files,
+        fields: { secret, text, surveyId }
+      } = await asyncBusboy(ctx.req)
+
+      // Authorization check
+      if (!secret || secret !== process.env.apiSecret) {
+        return Bluebird.reject({ status: 401, errors: 'unauthorized' })
+      }
+      if (!surveyId) {
+        return Bluebird.reject({
+          status: 200,
+          errors: 'survey id has not been provided'
+        })
+      }
+
+      var file = files[0]
+      console.log(file.mimeType)
+      var params = {
+        Bucket: process.env.s3BucketName,
+        Body: file,
+        Key: file.filename,
+        ContentType: file.mimeType
+      }
+      const response = await s3.upload(params).promise()
+
+      if (response.Location) {
+        const question = await request.post({
+          uri: `${config.constants.URL}/admin/question-create`,
+          body: {
+            secret: process.env.apiSecret,
+            data: {
+              hasAttachment: true,
+              attachmentKey: response.Location,
+              question: text,
+              surveyId: parseInt(surveyId)
+            }
+          },
+          json: true
+        })
+        console.log(question)
+      }
+      ctx.body = { url: response.Location, key: file.filename }
+    }
+  },
+
+  getObject: {
+    async method (ctx) {
+      var params = {
+        Bucket: process.env.s3BucketName,
+        Key: 'IMG_4181.JPG'
+      }
+
+      const payload = await s3.getObject(params).promise()
+      console.log(payload.Body)
     }
   }
 })

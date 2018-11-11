@@ -1,4 +1,4 @@
-module.exports = (request, config, Configs, Bluebird) => ({
+module.exports = (request, config, Configs, Bluebird, s3) => ({
   receive: {
     async method (ctx) {
       const { object, entry } = ctx.request.body
@@ -33,7 +33,10 @@ module.exports = (request, config, Configs, Bluebird) => ({
           })
 
           if (reply) {
+            console.log(questionData)
+
             let quickReplies = []
+            let attachmentKey = ''
             if (questionData && questionData.answers) {
               quickReplies = Object.keys(questionData.answers).map(
                 answerKey => ({
@@ -44,6 +47,9 @@ module.exports = (request, config, Configs, Bluebird) => ({
               )
             }
 
+            if (questionData && questionData.attachmentKey) {
+              attachmentKey = questionData.attachmentKey
+            }
             await request.post({
               uri: `${config.constants.URL}/facebook-send`,
               body: {
@@ -51,7 +57,8 @@ module.exports = (request, config, Configs, Bluebird) => ({
                   pageId,
                   facebookId: senderId,
                   message: reply,
-                  quickReplies
+                  quickReplies,
+                  attachmentKey
                 }
               },
               json: true
@@ -90,19 +97,15 @@ module.exports = (request, config, Configs, Bluebird) => ({
           ['pageId', true],
           ['facebookId', true],
           ['message', true],
-          ['quickReplies', 'array']
+          ['quickReplies', 'array'],
+          ['attachmentKey']
         ]
       ]
     ],
     async method (ctx) {
       const {
-        data: { pageId, facebookId, message, quickReplies }
+        data: { pageId, facebookId, message, quickReplies, attachmentKey }
       } = ctx.request.body
-
-      const messageData = { text: message }
-      if (quickReplies && quickReplies.length) {
-        messageData['quick_replies'] = quickReplies
-      }
 
       let token = await Configs.findOne({ where: { key: pageId } })
       if (!token) {
@@ -112,6 +115,35 @@ module.exports = (request, config, Configs, Bluebird) => ({
             value: 'The bot has not been subscribed to this page'
           }
         ])
+      }
+
+      const messageData = { text: message }
+      if (quickReplies && quickReplies.length) {
+        messageData['quick_replies'] = quickReplies
+      }
+      if (attachmentKey) {
+        const attachmentData = {}
+        let attachment = {}
+
+        attachment.payload = {
+          url: attachmentKey,
+          is_reusable: true
+        }
+        attachment.type = 'image'
+        attachmentData.attachment = attachment
+
+        await request.post({
+          uri: `${config.constants.FACEBOOK_API}/me/messages?access_token=${
+            token.value
+          }`,
+          body: {
+            recipient: {
+              id: facebookId
+            },
+            message: attachmentData
+          },
+          json: true
+        })
       }
 
       await request.post({
@@ -157,7 +189,7 @@ module.exports = (request, config, Configs, Bluebird) => ({
 
       let fbIds = ''
       for (var pid of ids.data) {
-        fbIds += ` ${pid.id}, `
+        fbIds += `${pid.id},`
       }
 
       ctx.body = { fbIds }

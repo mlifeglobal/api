@@ -17,7 +17,9 @@ module.exports = (
           ['questionType'],
           ['answerType'],
           ['surveyId', true, 'integer'],
-          ['predefinedAnswers', 'object']
+          ['predefinedAnswers', 'object'],
+          ['attachmentKey'],
+          ['hasAttachment','boolean']
         ]
       ]
     ],
@@ -28,9 +30,12 @@ module.exports = (
           questionType,
           answerType,
           surveyId,
-          predefinedAnswers
+          predefinedAnswers,
+          attachmentKey,
+          hasAttachment
         }
       } = ctx.request.body
+
 
       const survey = await Survey.findOne({ where: { id: surveyId } })
       if (!survey) {
@@ -49,7 +54,10 @@ module.exports = (
         question,
         questionType,
         answerType,
-        surveyId
+        surveyId,
+        attachmentKey,
+        hasAttachment,
+        platforms: hasAttachment? ['facebook'] : []
       })
 
       // Create entry for predefinedAnswers if provided
@@ -456,6 +464,10 @@ module.exports = (
       }
 
       const questionData = { question: question.question, answers: {} }
+
+      if (question.attachmentKey) {
+        questionData.attachmentKey = question.attachmentKey
+      }
 
       let reply = replaceQuestionText
         ? 'Please answer with one of the answers below:'

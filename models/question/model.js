@@ -41,6 +41,14 @@ module.exports = Sequelize => ({
     demographicsKey: {
       type: Sequelize.STRING,
       field: 'demographics_key'
+    },
+    attachmentKey: {
+      type: Sequelize.STRING,
+      field: 'attachment_key'
+    },
+    hasAttachment: {
+      type: Sequelize.BOOLEAN,
+      field: 'has_attachment'
     }
   },
   hooks: {

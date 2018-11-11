@@ -15,7 +15,7 @@ module.exports = (
 ) => ({
   create: {
     schema: [
-      ['data', true, [['phone'], ['facebookId'], ['fromWhatsapp', 'boolean'],['fbPageId']]]
+      ['data', true, [['phone'], ['facebookId'], ['fromWhatsapp', 'boolean'], ['fbPageId']]]
     ],
     async method (ctx) {
       const {
@@ -30,7 +30,7 @@ module.exports = (
           }
         ])
       }
-      console.log(facebookId, fbPageId)
+     
       let participant = null
       const participantFindObj = {}
       // Create/retrieve participant using phone number
@@ -50,9 +50,8 @@ module.exports = (
       }
       // Check for multiple page ids
       if (facebookId) {
-        participant = await Participant.findOne({ where: {facebookId: {[Sequelize.Op.like]: `% ${facebookId},%`}} })
+        participant = await Participant.findOne({ where: {facebookId: {[Sequelize.Op.like]: `%${facebookId}%`}} })
         if (!participant) {
-
           const {fbIds} = await request.post({
             uri: `${config.constants.URL}/facebook-get-page-ids`,
             body: {
