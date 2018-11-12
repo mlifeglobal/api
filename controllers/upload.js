@@ -134,9 +134,6 @@ module.exports = (
       } = await asyncBusboy(ctx.req)
 
       // Authorization check
-      if (!secret || secret !== process.env.apiSecret) {
-        return Bluebird.reject({ status: 401, errors: 'unauthorized' })
-      }
       if (!surveyId) {
         return Bluebird.reject({
           status: 200,

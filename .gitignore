@@ -2,5 +2,6 @@ node_modules/
 secret.js
 
 assets
+!assets/*.html
 .DS_Store
 package-lock.json
