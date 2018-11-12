@@ -73,17 +73,6 @@ module.exports = (
         }
       }
 
-      participant = await Participant.findOne({ where: participantFindObj })
-      if (!participant) {
-        participant = await Participant.create({
-          phone,
-          facebookId,
-          hasWhatsapp: fromWhatsapp && true
-        })
-      } else if (fromWhatsapp) {
-        participant.update({ hasWhatsapp: true })
-      }
-
       ctx.body = { data: { participantId: participant.id } }
     },
     onError (error) {

@@ -765,6 +765,55 @@ module.exports = (Question, Survey, request, config, Bluebird, fs) => ({
       ctx.body = ''
     }
   },
+  uploadFbToken: {
+    async method (ctx) {
+      const { token, trigger_id } = ctx.request.body
+
+      if (token !== process.env.slackVerificationToken) {
+        return Bluebird.reject([
+          { key: 'Access Denied', value: `Incorrect Verification Token` }
+        ])
+      }
+
+      const dialogObj = {
+        trigger_id: trigger_id,
+        dialog: JSON.stringify({
+          title: 'Upload FB page token',
+          callback_id: 'admin/system-config-upload',
+          submit_label: 'Submit',
+          elements: [
+            {
+              label: 'Facebook Page ID',
+              type: 'text',
+              name: 'key'
+            },
+            {
+              label: 'Access Token',
+              type: 'textarea',
+              name: 'value'
+            },
+            {
+              label: 'Page name',
+              type: 'text',
+              name: 'token'
+            },
+            {
+              label: 'Description',
+              type: 'text',
+              name: 'description'
+            }
+          ]
+        })
+      }
+      // open the dialog by calling dialogs.open method and sending the payload
+      await request.post({
+        uri: `${config.constants.URL}/slack-open-dialog`,
+        body: dialogObj,
+        json: true
+      })
+      ctx.body = ''
+    }
+  },
   getQuestions: {
     async method (ctx) {
       const { token, text } = ctx.request.body
@@ -983,7 +1032,7 @@ module.exports = (Question, Survey, request, config, Bluebird, fs) => ({
         }
         if (arrayObjs.indexOf(k) > -1 && body.submission[k] !== undefined) {
           body.submission[k] = body.submission[k].replace(/\s/g, '').split(',')
-        } else if (!(k === 'option' || isNaN(+body.submission[k]))) {
+        } else if (!(k ==='key' || k === 'option' || isNaN(+body.submission[k]))) {
           // Convert strings to int
           body.submission[k] = +body.submission[k]
         }
