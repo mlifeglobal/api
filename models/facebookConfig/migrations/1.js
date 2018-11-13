@@ -1,7 +1,7 @@
 module.exports = Sequelize => ({
   up (queryInterface) {
     return queryInterface
-      .createTable('configs', {
+      .createTable('facebook_configs', {
         id: {
           type: Sequelize.INTEGER,
           allowNull: false,
@@ -32,7 +32,7 @@ module.exports = Sequelize => ({
         }
       })
       .then(() => {
-        queryInterface.bulkInsert('configs', [
+        queryInterface.bulkInsert('facebook_configs', [
           {
             key: process.env.facebookPageId,
             value: process.env.facebookPageAccessToken,
@@ -43,6 +43,6 @@ module.exports = Sequelize => ({
       })
   },
   down (queryInterface) {
-    return queryInterface.dropTable('configs')
+    return queryInterface.dropTable('facebook_configs')
   }
 })

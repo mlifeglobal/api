@@ -1,4 +1,4 @@
-module.exports = (request, config, Config, Bluebird, s3) => ({
+module.exports = (request, config, FacebookConfig, Bluebird, s3) => ({
   receive: {
     async method (ctx) {
       const { object, entry } = ctx.request.body
@@ -107,7 +107,7 @@ module.exports = (request, config, Config, Bluebird, s3) => ({
         data: { pageId, facebookId, message, quickReplies, attachmentKey }
       } = ctx.request.body
 
-      let token = await Config.findOne({ where: { key: pageId } })
+      let token = await FacebookConfig.findOne({ where: { key: pageId } })
       if (!token) {
         return Bluebird.reject([
           {
@@ -170,7 +170,7 @@ module.exports = (request, config, Config, Bluebird, s3) => ({
         data: { facebookId, fbPageId }
       } = ctx.request.body
 
-      let token = await Config.findOne({ where: { key: fbPageId } })
+      let token = await FacebookConfig.findOne({ where: { key: fbPageId } })
       if (!token) {
         return Bluebird.reject([
           {

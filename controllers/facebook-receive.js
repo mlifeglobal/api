@@ -1,4 +1,4 @@
-module.exports = (Bluebird, Config) => ({
+module.exports = (Bluebird, FacebookConfig) => ({
   type: 'get',
   async method (ctx) {
     const params = {}
@@ -10,7 +10,7 @@ module.exports = (Bluebird, Config) => ({
         params[key] = value
       })
 
-    const config = await Config.findOne({
+    const config = await FacebookConfig.findOne({
       where: { token: params['hub.verify_token'] }
     })
     if (!config) {

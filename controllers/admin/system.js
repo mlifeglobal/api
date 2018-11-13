@@ -1,4 +1,9 @@
-module.exports = (Survey, ParticipantSurvey, ParticipantAnswer, Config) => ({
+module.exports = (
+  Survey,
+  ParticipantSurvey,
+  ParticipantAnswer,
+  FacebookConfig
+) => ({
   info: {
     async method (ctx) {
       let message = '-------------------------------------\n'
@@ -80,7 +85,7 @@ module.exports = (Survey, ParticipantSurvey, ParticipantAnswer, Config) => ({
         data: { key, description, value, token }
       } = ctx.request.body
 
-      await Config.create({
+      await FacebookConfig.create({
         key,
         description,
         value,
