@@ -1,4 +1,4 @@
-module.exports = (Survey, ParticipantSurvey, ParticipantAnswer, Configs) => ({
+module.exports = (Survey, ParticipantSurvey, ParticipantAnswer, Config) => ({
   info: {
     async method (ctx) {
       let message = '-------------------------------------\n'
@@ -80,7 +80,7 @@ module.exports = (Survey, ParticipantSurvey, ParticipantAnswer, Configs) => ({
         data: { key, description, value, token }
       } = ctx.request.body
 
-      await Configs.create({
+      await Config.create({
         key,
         description,
         value,

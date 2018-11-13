@@ -1,4 +1,4 @@
-module.exports = (Bluebird, twilio, request, Configs) => ({
+module.exports = (Bluebird, Config) => ({
   type: 'get',
   async method (ctx) {
     const params = {}
@@ -10,7 +10,7 @@ module.exports = (Bluebird, twilio, request, Configs) => ({
         params[key] = value
       })
 
-    const config = await Configs.findOne({
+    const config = await Config.findOne({
       where: { token: params['hub.verify_token'] }
     })
     if (!config) {

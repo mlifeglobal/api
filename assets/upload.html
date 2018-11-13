@@ -1,15 +1,18 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>File Upload</title>
-    </head>
-    <body>
-        <form action="https://api.mlifeglobal.com/upload-attachment" method="post" enctype="multipart/form-data">
-            <label for="file_photo">Photo:</label>
-            <input type="file" name="file" id="file_photo"><br>
-	    <input type="text" name="text" placeholder="Attachment text"><br>
-	    <input type="text" name="surveyId" placeholder="Survey id"><br>
-            <input type="submit" value="Upload">
-        </form>
-    </body>
+
+<head>
+    <title>File Upload</title>
+</head>
+
+<body>
+    <form action="https://api.mlifeglobal.com/upload-attachment" method="post" enctype="multipart/form-data">
+        <label for="file_photo">Photo:</label>
+        <input type="file" name="file" id="file_photo"><br>
+        <input type="text" name="text" placeholder="Attachment text"><br>
+        <input type="text" name="surveyId" placeholder="Survey id"><br>
+        <input type="submit" value="Upload">
+    </form>
+</body>
+
 </html>
