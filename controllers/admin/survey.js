@@ -388,6 +388,18 @@ module.exports = (
       ctx.body = { data: { surveys } }
     }
   },
+  getClientSurveys: {
+    async method (ctx) {
+      const {data: {clientID}} = ctx.request.body
+
+      const surveys = await Survey.findAll({
+        where: { clientID },
+        raw: true
+      })
+
+      ctx.body = { data: { surveys } }
+    }
+  },
   getQuestions: {
     schema: [['data', true, [['surveyId', true, 'integer']]]],
     async method (ctx) {
