@@ -5,8 +5,8 @@ module.exports = {
     secure: true,
     auth: {
       // sample email credentials
-      user: '',
-      pass: ''
+      user: 'mailtesterthrive',
+      pass: '123456qweasd'
     }
   }
 }

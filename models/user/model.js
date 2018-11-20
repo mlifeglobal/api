@@ -1,4 +1,4 @@
-module.exports = (Sequelize, bcrypt, JWT) => ({
+module.exports = (Sequelize, bcrypt, JWT, moment, mail) => ({
   attributes: {
     email: {
       type: Sequelize.STRING,
@@ -51,6 +51,45 @@ module.exports = (Sequelize, bcrypt, JWT) => ({
     },
     checkPassword (password) {
       return bcrypt.compareSync(password, this.password)
+    },
+    async generateRestorePasswordToken () {
+      const random = () => Math.floor(1000 + Math.random() * 9000)
+      const users = await this.constructor.findAll({
+        where: {
+          restorePasswordToken: { [Sequelize.Op.ne]: null },
+          restorePasswordTokenExpiresAt: {
+            [Sequelize.Op.gt]: moment().toDate()
+          }
+        }
+      })
+      const tokens = users.map(item => item.restorePasswordToken)
+      let token = random()
+
+      while (tokens.includes(token)) {
+        token = random()
+      }
+
+      this.restorePasswordToken = token
+      this.restorePasswordTokenExpiresAt = moment()
+        .add(60, 'm')
+        .toDate()
+      await this.save()
+
+      // prettier-ignore
+      mail.send({
+        from: 'restore@mlifeglobal.com',
+        html: `
+          <html>
+            <div>
+              <p>Use the code <b>[${this.restorePasswordToken}]</b> to reset your password. </p>
+              <p>The code will expire after an hour</p>
+              <p>If you haven't requested a password reset, you can ignore this message</p>
+              <p>-The team at Mlife</p>
+            </div>
+          </html>`,
+        subject: 'Mlife password reset',
+        to: this.email
+      })
     },
     generateJWT () {
       return JWT.sign({ id: this.id, email: this.email }, process.env.key)
