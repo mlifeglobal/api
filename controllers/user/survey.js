@@ -1,7 +1,7 @@
 module.exports = (Bluebird, JWT, config, request) => ({
   getAll: {
     async method (ctx) {
-      console.log(ctx.request)
+      const {clientID} = ctx.request.body
 
       const {
         data: { surveys }
@@ -9,7 +9,7 @@ module.exports = (Bluebird, JWT, config, request) => ({
         uri: `${config.constants.URL}/admin/survey-get-client-surveys`,
         body: {
           secret: process.env.apiSecret,
-          data: { clientID: 1 }
+          data: { clientID }
         },
         json: true
       })
