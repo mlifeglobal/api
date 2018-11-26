@@ -390,10 +390,11 @@ module.exports = (
   },
   getClientSurveys: {
     async method (ctx) {
-      const {data: {clientID}} = ctx.request.body
-
+      const {data: {clientID, offset, limit}} = ctx.request.body
       const surveys = await Survey.findAll({
         where: { clientID },
+        offset,
+        limit,
         raw: true
       })
 
