@@ -1,7 +1,7 @@
-module.exports = (Bluebird, JWT, config, request) => ({
+module.exports = (config, request) => ({
   getAll: {
     async method (ctx) {
-      const {clientID} = ctx.request.body
+      const { clientID } = ctx.request.body
 
       const {
         data: { surveys }
@@ -14,6 +14,7 @@ module.exports = (Bluebird, JWT, config, request) => ({
         json: true
       })
 
-      ctx.body = {surveys}
-    }}
+      ctx.body = { surveys }
+    }
+  }
 })

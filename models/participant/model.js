@@ -1,4 +1,4 @@
-module.exports = Sequelize => ({
+module.exports = (Sequelize, JWT) => ({
   attributes: {
     phone: {
       type: Sequelize.STRING,
@@ -16,6 +16,11 @@ module.exports = Sequelize => ({
       type: Sequelize.BOOLEAN,
       field: 'has_whatsapp',
       defaultValue: false
+    },
+    webLinked: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: false,
+      field: 'web_linked'
     }
   },
   associations: {
@@ -24,5 +29,17 @@ module.exports = Sequelize => ({
       { model: 'Survey', through: 'participant_surveys' },
       { model: 'Question', through: 'participant_answers' }
     ]
+  },
+  instanceMethods: {
+    generateJWT () {
+      return JWT.sign({ id: this.id, phone: this.phone }, process.env.key)
+    },
+    getData () {
+      return {
+        jwt: this.generateJWT(),
+        phone: this.phone,
+        participantID: this.id
+      }
+    }
   }
 })
