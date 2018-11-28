@@ -464,6 +464,7 @@ module.exports = (
       }
 
       const questionData = {
+        questionId: question.id,
         question: question.question,
         questionType: question.questionType,
         answerType: question.answerType,

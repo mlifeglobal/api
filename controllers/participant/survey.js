@@ -125,5 +125,68 @@ module.exports = (
         data: { survey: { surveyId, status, question: questionData } }
       }
     }
+  },
+
+  saveAnswer: {
+    schema: [
+      [
+        'data',
+        true,
+        [
+          ['surveyId', true, 'integer'],
+          ['questionId', true, 'integer'],
+          ['answer', true]
+        ]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { surveyId, questionId, answer }
+      } = ctx.request.body
+
+      console.log({ surveyId, questionId, answer })
+      const {
+        data: { nextQuestionId, status }
+      } = await request.post({
+        uri: `${config.constants.URL}/admin/participant-save-answer`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            participantId: ctx.authorized.id,
+            surveyId,
+            questionId,
+            answers: [answer]
+          }
+        },
+        json: true
+      })
+
+      console.log({ nextQuestionId, status })
+
+      const survey = { surveyId, status }
+      if (nextQuestionId > 0) {
+        // Get the question data
+        const {
+          data: { questionData }
+        } = await request.post({
+          uri: `${config.constants.URL}/admin/question-format`,
+          body: {
+            secret: process.env.apiSecret,
+            data: {
+              questionId: nextQuestionId
+            }
+          },
+          json: true
+        })
+        survey.question = questionData
+      } else {
+        const surveyInstance = await Survey.findOne({ where: { id: surveyId } })
+        survey.completionString = surveyInstance.completionString
+      }
+
+      ctx.body = {
+        data: { survey }
+      }
+    }
   }
 })
