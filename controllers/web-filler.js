@@ -12,7 +12,7 @@ module.exports = (
         data: { phone }
       } = ctx.request.body
 
-      let data = {}
+      let data = { participant: {}, survey: {} }
 
       let participant = await Participant.findOne({ where: { phone } })
       if (!participant) {
@@ -26,15 +26,15 @@ module.exports = (
           ])
         }
 
-        const verifyRes = await request.get({
+        const {
+          valid,
+          international_format: internationalFormat
+        } = await request.get({
           uri: `${config.constants.API_LAYER_URL}/validate?access_key=${
             process.env.numVerifyToken
           }&number=${phone}`,
           json: true
         })
-        console.log(verifyRes)
-        const { valid, international_format: internationalFormat } = verifyRes
-        console.log({ valid, internationalFormat })
 
         if (!valid) {
           return Bluebird.reject([
@@ -49,14 +49,16 @@ module.exports = (
         participant.webLinked = true
         await participant.save()
 
-        data = participant.getData()
+        data.participant = participant.getData()
 
         const inProgressSurvey = await ParticipantSurvey.findOne({
           where: { participantId: participant.id, status: 'in_progress' }
         })
         if (inProgressSurvey) {
-          data.surveyID = inProgressSurvey.surveyId
-          data.lastQuestionID = inProgressSurvey.lastAnsweredQuestionId
+          data.survey = {
+            surveyID: inProgressSurvey.surveyId,
+            lastQuestionID: inProgressSurvey.lastAnsweredQuestionId
+          }
         }
       }
 

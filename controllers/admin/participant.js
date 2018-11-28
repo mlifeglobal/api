@@ -259,6 +259,7 @@ module.exports = (
       if (platform) {
         whereClause.platforms = { [Sequelize.Op.contains]: [platform] }
       }
+
       let dismatchReply
       const newSurvey = await Survey.findOne({ where: whereClause })
       if (!newSurvey) {
@@ -662,6 +663,7 @@ module.exports = (
 
       // Update or Create ParticipantSurvey entry
       if (participantSurvey) {
+        const prevStatus = participantSurvey.status
         const status = nextQuestion ? 'in_progress' : 'completed'
 
         await participantSurvey.update({
@@ -670,7 +672,7 @@ module.exports = (
           skippedQuestions: questionsToSkip
         })
 
-        if (status === 'completed') {
+        if (status === 'completed' && prevStatus !== 'completed') {
           const newCompletedCount = survey.completedCount + 1
           const newState =
             survey.maxCompletionLimit &&

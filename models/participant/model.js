@@ -37,8 +37,7 @@ module.exports = (Sequelize, JWT) => ({
     getData () {
       return {
         jwt: this.generateJWT(),
-        phone: this.phone,
-        participantID: this.id
+        phone: this.phone
       }
     }
   }
