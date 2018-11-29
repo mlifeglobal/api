@@ -19,11 +19,11 @@ module.exports = (
           ['surveyId', true, 'integer'],
           ['predefinedAnswers', 'object'],
           ['attachmentKey'],
-          ['hasAttachment','boolean']
+          ['hasAttachment', 'boolean']
         ]
       ]
     ],
-    async method(ctx) {
+    async method (ctx) {
       const {
         data: {
           question,
@@ -35,7 +35,6 @@ module.exports = (
           hasAttachment
         }
       } = ctx.request.body
-
 
       const survey = await Survey.findOne({ where: { id: surveyId } })
       if (!survey) {
@@ -57,7 +56,7 @@ module.exports = (
         surveyId,
         attachmentKey,
         hasAttachment,
-        platforms: hasAttachment? ['facebook'] : []
+        platforms: hasAttachment ? ['facebook'] : []
       })
 
       // Create entry for predefinedAnswers if provided
@@ -85,7 +84,7 @@ module.exports = (
   },
   delete: {
     schema: [['data', true, [['questionId', true, 'integer']]]],
-    async method(ctx) {
+    async method (ctx) {
       const {
         data: { questionId }
       } = ctx.request.body
@@ -123,7 +122,8 @@ module.exports = (
       }
 
       await question.update({
-        platforms: lodash.union(question.platforms, platforms)      })
+        platforms: lodash.union(question.platforms, platforms)
+      })
 
       ctx.body = {
         data: `Qurvey has succesfully published for id: ${question.id}`
@@ -177,7 +177,7 @@ module.exports = (
         ]
       ]
     ],
-    async method(ctx) {
+    async method (ctx) {
       const {
         data: { questionId, answerId, answerKey }
       } = ctx.request.body
@@ -236,7 +236,7 @@ module.exports = (
         ]
       ]
     ],
-    async method(ctx) {
+    async method (ctx) {
       const {
         data: {
           questionId,
@@ -306,7 +306,7 @@ module.exports = (
         [['questionId1', true, 'integer'], ['questionId2', true, 'integer']]
       ]
     ],
-    async method(ctx) {
+    async method (ctx) {
       const {
         data: { questionId1, questionId2 }
       } = ctx.request.body
@@ -358,7 +358,7 @@ module.exports = (
         ]
       ]
     ],
-    async method(ctx) {
+    async method (ctx) {
       const {
         data: { predefinedAnswerId, skipQuestions }
       } = ctx.request.body
@@ -400,7 +400,7 @@ module.exports = (
         ]
       ]
     ],
-    async method(ctx) {
+    async method (ctx) {
       const {
         data: { questionId, skipQuestions, option }
       } = ctx.request.body
@@ -451,7 +451,7 @@ module.exports = (
         [['questionId', true, 'integer'], ['replaceQuestionText', 'boolean']]
       ]
     ],
-    async method(ctx) {
+    async method (ctx) {
       const {
         data: { questionId, replaceQuestionText }
       } = ctx.request.body
@@ -463,7 +463,13 @@ module.exports = (
         ])
       }
 
-      const questionData = { question: question.question, answers: {} }
+      const questionData = {
+        questionId: question.id,
+        question: question.question,
+        questionType: question.questionType,
+        answerType: question.answerType,
+        answers: {}
+      }
 
       if (question.attachmentKey) {
         questionData.attachmentKey = question.attachmentKey
@@ -497,7 +503,7 @@ module.exports = (
   getPredefAnswers: {
     schema: [['data', true, [['questionId', true, 'integer']]]],
 
-    async method(ctx) {
+    async method (ctx) {
       const {
         data: { questionId }
       } = ctx.request.body
@@ -527,7 +533,9 @@ module.exports = (
   },
 
   createDemographics: {
-    schema: [['data', true, [['key', true], ['validation'], ['validationMsg']]]],
+    schema: [
+      ['data', true, [['key', true], ['validation'], ['validationMsg']]]
+    ],
 
     async method (ctx) {
       const {
@@ -575,7 +583,7 @@ module.exports = (
       const question = await Question.findOne({ where: { id: questionId } })
 
       if (!question) {
-        ctx.body = {data: `Question not found for ID: ${questionId}`}
+        ctx.body = { data: `Question not found for ID: ${questionId}` }
         return
       }
 
@@ -583,12 +591,12 @@ module.exports = (
         where: { key: demographicsKey }
       })
       if (!demographic) {
-        ctx.body = {data: `Demographic not found for key: ${demographicsKey}`}
+        ctx.body = { data: `Demographic not found for key: ${demographicsKey}` }
 
         return
       }
 
-      await question.update({demographicsKey: demographicsKey})
+      await question.update({ demographicsKey: demographicsKey })
       ctx.body = {
         data: `Demographic ${demographicsKey} has been attached to question: ${questionId}`
       }

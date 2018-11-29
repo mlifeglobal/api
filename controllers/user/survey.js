@@ -1,7 +1,9 @@
-module.exports = (Bluebird, JWT, config, request) => ({
+module.exports = (config, request) => ({
   getAll: {
     async method (ctx) {
-      const {data: {clientID, offset, limit}} = ctx.request.body
+      const {
+        data: { clientID, offset, limit }
+      } = ctx.request.body
       const {
         data: { surveys, surveysCount }
       } = await request.post({
@@ -46,19 +48,21 @@ module.exports = (Bluebird, JWT, config, request) => ({
         uri: `${config.constants.URL}/admin/survey-create`,
         body: {
           secret: process.env.apiSecret,
-          data: {name,
+          data: {
+            name,
             description,
             introString,
             completionString,
             incentive,
-            currency }
+            currency
+          }
         },
         json: true
       })
 
       console.log(data, surveyId)
 
-      ctx.body = {data: 'Survey has been succesfully created'}
+      ctx.body = { data: 'Survey has been succesfully created' }
     }
   }
 })
