@@ -3,7 +3,7 @@ module.exports = (Bluebird, JWT, config, request) => ({
     async method (ctx) {
       const {data: {clientID, offset, limit}} = ctx.request.body
       const {
-        data: { surveys }
+        data: { surveys, surveysCount }
       } = await request.post({
         uri: `${config.constants.URL}/admin/survey-get-client-surveys`,
         body: {
@@ -12,7 +12,7 @@ module.exports = (Bluebird, JWT, config, request) => ({
         },
         json: true
       })
-      ctx.body = {surveys}
+      ctx.body = {surveys, surveysCount}
     }},
   
   create: {
