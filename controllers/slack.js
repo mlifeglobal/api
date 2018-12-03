@@ -814,6 +814,7 @@ module.exports = (Question, Survey, request, config, Bluebird, fs) => ({
       ctx.body = ''
     }
   },
+
   getQuestions: {
     async method (ctx) {
       const { token, text } = ctx.request.body
@@ -1032,7 +1033,9 @@ module.exports = (Question, Survey, request, config, Bluebird, fs) => ({
         }
         if (arrayObjs.indexOf(k) > -1 && body.submission[k] !== undefined) {
           body.submission[k] = body.submission[k].replace(/\s/g, '').split(',')
-        } else if (!(k ==='key' || k === 'option' || isNaN(+body.submission[k]))) {
+        } else if (
+          !(k === 'key' || k === 'option' || isNaN(+body.submission[k]))
+        ) {
           // Convert strings to int
           body.submission[k] = +body.submission[k]
         }
