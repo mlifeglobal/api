@@ -1,4 +1,4 @@
-module.exports = (request, config, FacebookConfig, Bluebird, s3) => ({
+module.exports = (request, config, FacebookConfig, Bluebird) => ({
   receive: {
     async method (ctx) {
       const { object, entry } = ctx.request.body
