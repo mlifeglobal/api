@@ -192,7 +192,7 @@ module.exports = (request, config, FacebookConfig, Bluebird) => ({
         fbIds += `${pid.id},`
       }
 
-      ctx.body = { fbIds }
+      ctx.body = { fbIds: fbIds === '' ? facebookId : fbIds }
     }
   }
 })

@@ -397,8 +397,9 @@ module.exports = (
         limit,
         raw: true
       })
+      const surveysCount = await Survey.count()
 
-      ctx.body = { data: { surveys } }
+      ctx.body = { data: { surveys, surveysCount } }
     }
   },
   getQuestions: {
