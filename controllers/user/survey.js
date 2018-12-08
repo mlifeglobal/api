@@ -14,9 +14,10 @@ module.exports = (config, request) => ({
         },
         json: true
       })
-      ctx.body = {surveys, surveysCount}
-    }},
-  
+      ctx.body = { surveys, surveysCount }
+    }
+  },
+
   create: {
     schema: [
       [
@@ -63,6 +64,76 @@ module.exports = (config, request) => ({
       console.log(data, surveyId)
 
       ctx.body = { data: 'Survey has been succesfully created' }
+    }
+  },
+  updateDetails: {
+    schema: [
+      [
+        'data',
+        true,
+        [
+          ['surveyId', true, 'integer'],
+          ['name', true],
+          ['description', true],
+          ['introString', true],
+          ['completionString', true],
+          ['incentive', true, 'integer'],
+          ['currency', true]
+        ]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: {
+          surveyId,
+          name,
+          description,
+          introString,
+          completionString,
+          incentive,
+          currency
+        }
+      } = ctx.request.body
+
+      const { survey } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-update`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId,
+            name,
+            description,
+            introString,
+            completionString,
+            incentive,
+            currency
+          }
+        },
+        json: true
+      })
+
+      ctx.body = { survey }
+    }
+  },
+  changeState: {
+    async method (ctx) {
+      const {
+        data: { surveyId, state }
+      } = ctx.request.body
+
+      const { survey } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-toggle-state`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId,
+            state
+          }
+        },
+        json: true
+      })
+      console.log(survey.state)
+      ctx.body = { survey }
     }
   }
 })

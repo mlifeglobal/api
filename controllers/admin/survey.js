@@ -113,19 +113,21 @@ module.exports = (
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
         ])
       }
+      let optInCodes
+      if (givenOptInCodes) {
+        optInCodes = givenOptInCodes.map(code => code.toLowerCase())
 
-      const optInCodes = givenOptInCodes.map(code => code.toLowerCase())
-
-      const optInCodesInUse = await Survey.optInCodesInUse(
-        optInCodes,
-        survey.id
-      )
-      if (optInCodesInUse.length > 0) {
-        ctx.body = {
-          ok: false,
-          data: `Opt in codes ${optInCodesInUse.join()} are already in use by other active surveys.`
+        const optInCodesInUse = await Survey.optInCodesInUse(
+          optInCodes,
+          survey.id
+        )
+        if (optInCodesInUse.length > 0) {
+          ctx.body = {
+            ok: false,
+            data: `Opt in codes ${optInCodesInUse.join()} are already in use by other active surveys.`
+          }
+          return
         }
-        return
       }
 
       let updateObj = {}
@@ -140,9 +142,10 @@ module.exports = (
       if (currency) updateObj.currency = currency
 
       await survey.update(updateObj)
-
+      const updatedSurvey = await Survey.findOne({ where: { id: surveyId } })
       ctx.body = {
-        data: `Survey has succesfully updated for id: ${survey.id}`
+        data: `Survey has succesfully updated for id: ${survey.id}`,
+        survey: updatedSurvey
       }
     }
   },
@@ -173,6 +176,30 @@ module.exports = (
 
       ctx.body = {
         data: `Survey has succesfully published for id: ${survey.id}`
+      }
+    }
+  },
+  toggleState: {
+    schema: [['data', true, [['surveyId', true, 'integer'], ['state', true]]]],
+    async method (ctx) {
+      const {
+        data: { surveyId, state }
+      } = ctx.request.body
+
+      const survey = await Survey.findOne({ where: { id: surveyId } })
+      if (!survey) {
+        return Bluebird.reject([
+          { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
+        ])
+      }
+
+      await survey.update({
+        state: state === 'in_progress' ? 'uninitiated' : 'in_progress'
+      })
+
+      const updatedSurvey = await Survey.findOne({ where: { id: surveyId } })
+      ctx.body = {
+        survey: updatedSurvey
       }
     }
   },
@@ -390,7 +417,9 @@ module.exports = (
   },
   getClientSurveys: {
     async method (ctx) {
-      const {data: {clientID, offset, limit}} = ctx.request.body
+      const {
+        data: { clientID, offset, limit }
+      } = ctx.request.body
       const surveys = await Survey.findAll({
         where: { clientID },
         offset,
