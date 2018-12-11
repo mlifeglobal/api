@@ -251,7 +251,7 @@ module.exports = (
       const {
         data: { surveyId, optInCodes: givenOptInCodes }
       } = ctx.request.body
-
+      console.log('optincodes', givenOptInCodes)
       const survey = await Survey.findOne({ where: { id: surveyId } })
       if (!survey) {
         return Bluebird.reject([
@@ -276,9 +276,11 @@ module.exports = (
       await survey.update({
         optInCodes: lodash.union(survey.optInCodes, optInCodes)
       })
+      const updatedSurvey = await Survey.findOne({ where: { id: surveyId } })
 
       ctx.body = {
-        data: `Opt in codes has been added for id: ${survey.id}`
+        data: `Opt in codes has been added for id: ${survey.id}`,
+        survey: updatedSurvey
       }
     }
   },
@@ -341,9 +343,11 @@ module.exports = (
       await survey.update({
         initCodes: lodash.union(survey.initCodes, initCodes)
       })
+      const updatedSurvey = await Survey.findOne({ where: { id: surveyId } })
 
       ctx.body = {
-        data: `Init codes have been added to survey : ${survey.id}`
+        data: `Init codes have been added to survey : ${survey.id}`,
+        survey: updatedSurvey
       }
     }
   },
@@ -477,6 +481,58 @@ module.exports = (
             '\n\t\t' +
             JSON.stringify(questionData.answers) +
             '\n'
+        }
+      }
+      ctx.body = {
+        data: questionsObj
+      }
+    }
+  },
+  getQuestionsObj: {
+    schema: [['data', true, [['surveyId', true, 'integer']]]],
+    async method (ctx) {
+      const {
+        data: { surveyId }
+      } = ctx.request.body
+
+      const survey = await Survey.findOne({ where: { id: surveyId } })
+      if (!survey) {
+        return Bluebird.reject([
+          { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
+        ])
+      }
+
+      const questions = await Question.findAll({
+        where: { surveyId },
+        order: [['order']],
+        raw: true
+      })
+      let questionsObj = []
+
+      for (var question of questions) {
+        if (question.questionType === 'open') {
+          questionsObj.push({
+            id: question.id,
+            type: 'open',
+            question: question.question
+          })
+        } else {
+          const {
+            data: { questionData }
+          } = await request.post({
+            uri: `${config.constants.URL}/admin/question-format`,
+            body: {
+              secret: process.env.apiSecret,
+              data: { questionId: question.id }
+            },
+            json: true
+          })
+          questionsObj.push({
+            id: question.id,
+            type: 'mcq',
+            question: question.question,
+            answers: questionData.answers
+          })
         }
       }
       ctx.body = {
