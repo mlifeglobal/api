@@ -78,7 +78,8 @@ module.exports = (
       ctx.body = {
         data: `Question with id ${
           quest.id
-        } has been added to survey  ${surveyId}`
+        } has been added to survey  ${surveyId}`,
+        questionId: quest.id
       }
     }
   },

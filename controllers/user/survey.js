@@ -216,5 +216,77 @@ module.exports = (config, request) => ({
       })
       ctx.body = { questions: data }
     }
+  },
+  deleteQuestion: {
+    async method (ctx) {
+      const {
+        data: { questionId, surveyId }
+      } = ctx.request.body
+
+      await request.post({
+        uri: `${config.constants.URL}/admin/question-delete`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            questionId
+          }
+        },
+        json: true
+      })
+      const { data } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-questions-obj`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId
+          }
+        },
+        json: true
+      })
+      ctx.body = { questions: data }
+    }
+  },
+  addQuestion: {
+    async method (ctx) {
+      const {
+        data: { question, surveyId, questionType, predefAnswers }
+      } = ctx.request.body
+
+      let predefinedAnswers = {}
+      let n = 0
+      if (predefAnswers && predefAnswers.length) {
+        for (var answer of predefAnswers) {
+          predefinedAnswers[n] = { value: answer }
+          n++
+        }
+      }
+
+      console.log(predefinedAnswers)
+
+      const { questionId } = await request.post({
+        uri: `${config.constants.URL}/admin/question-create`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId,
+            question,
+            questionType,
+            predefinedAnswers
+          }
+        },
+        json: true
+      })
+      const { data } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-questions-obj`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId
+          }
+        },
+        json: true
+      })
+      ctx.body = { questions: data }
+    }
   }
 })
