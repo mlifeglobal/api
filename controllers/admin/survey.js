@@ -420,19 +420,35 @@ module.exports = (
     }
   },
   getClientSurveys: {
+    schema: [
+      [
+        'data',
+        true,
+        [
+          ['clientID', true, 'integer'],
+          ['offset', true, 'integer'],
+          ['limit', true, 'integer']
+        ]
+      ]
+    ],
     async method (ctx) {
       const {
         data: { clientID, offset, limit }
       } = ctx.request.body
-      const surveys = await Survey.findAll({
-        where: { clientID },
-        offset,
-        limit,
-        raw: true
-      })
-      const surveysCount = await Survey.count()
 
-      ctx.body = { data: { surveys, surveysCount } }
+      const query = { where: { clientID }, offset }
+      if (limit > 0) {
+        query.limit = limit
+      }
+      const surveys = await Survey.findAll(query)
+
+      ctx.body = {
+        data: {
+          surveys,
+          surveysCount:
+            surveys && surveys.constructor === Array ? surveys.length : 0
+        }
+      }
     }
   },
   getQuestions: {

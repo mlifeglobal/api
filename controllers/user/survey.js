@@ -1,19 +1,26 @@
-module.exports = (config, request) => ({
+module.exports = (User, config, request) => ({
   getAll: {
+    schema: [
+      ['data', true, [['offset', true, 'integer'], ['limit', true, 'integer']]]
+    ],
     async method (ctx) {
       const {
-        data: { clientID, offset, limit }
+        data: { offset, limit }
       } = ctx.request.body
+
+      const user = await User.findOne({ where: { id: ctx.authorized.id } })
+
       const {
         data: { surveys, surveysCount }
       } = await request.post({
         uri: `${config.constants.URL}/admin/survey-get-client-surveys`,
         body: {
           secret: process.env.apiSecret,
-          data: { clientID, offset, limit }
+          data: { clientID: user.clientID, offset, limit }
         },
         json: true
       })
+
       ctx.body = { surveys, surveysCount }
     }
   },
@@ -261,9 +268,7 @@ module.exports = (config, request) => ({
         }
       }
 
-      console.log(predefinedAnswers)
-
-      const { questionId } = await request.post({
+      await request.post({
         uri: `${config.constants.URL}/admin/question-create`,
         body: {
           secret: process.env.apiSecret,
