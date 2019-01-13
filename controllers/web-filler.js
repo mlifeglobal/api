@@ -1,5 +1,6 @@
 module.exports = (
   Bluebird,
+  Sequelize,
   Participant,
   ParticipantSurvey,
   config,
@@ -52,12 +53,43 @@ module.exports = (
         data.participant = participant.getData()
 
         const inProgressSurvey = await ParticipantSurvey.findOne({
-          where: { participantId: participant.id, status: 'in_progress' }
+          where: {
+            participantId: participant.id,
+            status: { [Sequelize.Op.in]: ['initiated', 'in_progress'] }
+          }
         })
         if (inProgressSurvey) {
+          const {
+            data: { questionId }
+          } = await request.post({
+            uri: `${config.constants.URL}/admin/participant-get-question`,
+            body: {
+              secret: process.env.apiSecret,
+              data: {
+                participantId: participant.id,
+                surveyId: inProgressSurvey.surveyId
+              }
+            },
+            json: true
+          })
+
+          // Get the question data
+          const {
+            data: { questionData }
+          } = await request.post({
+            uri: `${config.constants.URL}/admin/question-format`,
+            body: {
+              secret: process.env.apiSecret,
+              data: {
+                questionId
+              }
+            },
+            json: true
+          })
+
           data.survey = {
-            surveyID: inProgressSurvey.surveyId,
-            lastQuestionID: inProgressSurvey.lastAnsweredQuestionId
+            surveyId: inProgressSurvey.surveyId,
+            question: questionData
           }
         }
       }
