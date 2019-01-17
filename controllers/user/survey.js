@@ -119,7 +119,10 @@ module.exports = (User, config, request) => ({
         json: true
       })
 
-      ctx.body = { survey }
+      ctx.body = {
+        survey,
+        message: 'Survey details have been successfully updated'
+      }
     }
   },
   updatePublish: {
@@ -200,8 +203,10 @@ module.exports = (User, config, request) => ({
         },
         json: true
       })
-      console.log(survey.state)
-      ctx.body = { survey }
+      ctx.body = {
+        survey,
+        message: 'Survey state has been succesfully updated'
+      }
     }
   },
 
