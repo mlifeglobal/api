@@ -298,5 +298,51 @@ module.exports = (User, config, request) => ({
       })
       ctx.body = { questions: data }
     }
+  },
+
+  updateQuestion: {
+    async method (ctx) {
+      const {
+        data: { question, surveyId, questionId, questionType, predefAnswers }
+      } = ctx.request.body
+
+      let predefinedAnswers = {}
+      let n = 0
+      if (predefAnswers && predefAnswers.length) {
+        for (var answer of predefAnswers) {
+          predefinedAnswers[n] = { value: answer }
+          n++
+        }
+      }
+      console.log(predefAnswers)
+
+      await request.post({
+        uri: `${config.constants.URL}/admin/question-update`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            questionId,
+            question,
+            questionType,
+            predefinedAnswers
+          }
+        },
+        json: true
+      })
+      const { data } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-questions-obj`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId
+          }
+        },
+        json: true
+      })
+      ctx.body = {
+        questions: data,
+        message: 'Question has been succesfully updated'
+      }
+    }
   }
 })
