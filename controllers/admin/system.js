@@ -72,6 +72,7 @@ module.exports = (
       ctx.body = { data: { surveys, participants, dataPointsCount }, message }
     }
   },
+
   configUpload: {
     schema: [
       [

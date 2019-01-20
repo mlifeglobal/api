@@ -4,6 +4,7 @@ module.exports = (
   Survey,
   Question,
   PredefinedAnswer,
+  ParticipantAnswer,
   Demographic,
   lodash
 ) => ({
@@ -593,11 +594,17 @@ module.exports = (
       })
       if (!demographic) {
         ctx.body = { data: `Demographic not found for key: ${demographicsKey}` }
-
         return
       }
 
       await question.update({ demographicsKey: demographicsKey })
+
+      // Update existing participant answers too
+      await ParticipantAnswer.update(
+        { demographics: demographicsKey },
+        { where: { questionId } }
+      )
+
       ctx.body = {
         data: `Demographic ${demographicsKey} has been attached to question: ${questionId}`
       }

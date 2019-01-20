@@ -615,13 +615,35 @@ module.exports = (
         }
         return
       }
+
       if (question.demographicsKey) {
         const demographic = await Demographic.findOne({
           where: { key: question.demographicsKey }
         })
+
         if (demographic.validation) {
-          var re = new RegExp(demographic.validation)
-          if (!re.test(answersToStore)) {
+          const validation = demographic.validation
+          let isValid = true
+
+          if (validation.includes('URL_')) {
+            const validationRes = await request.post({
+              uri: `${config.constants.URL}/admin/demographics-${
+                validation.split('_')[1]
+              }`,
+              body: {
+                data: {
+                  value: answersToStore[0]
+                }
+              },
+              json: true
+            })
+            isValid = validationRes.isValid
+          } else {
+            const re = new RegExp(validation)
+            isValid = re.test(answersToStore[0])
+          }
+
+          if (!isValid) {
             ctx.body = { data: { reply: demographic.validationMsg } }
             return
           }
@@ -635,6 +657,7 @@ module.exports = (
           )
         }
       }
+
       // Create ParticipantAnswer record
       await ParticipantAnswer.create({
         participantId,
