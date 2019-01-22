@@ -229,6 +229,98 @@ module.exports = (User, config, request) => ({
       ctx.body = { questions: data }
     }
   },
+  getBranchingData: {
+    async method (ctx) {
+      const {
+        data: { surveyId }
+      } = ctx.request.body
+
+      const { data } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-questions-obj`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId
+          }
+        },
+        json: true
+      })
+      let questions = data
+      let branchData = { nodeDataArray: [], linkDataArray: [] }
+      var count = 0
+
+      for (var question of questions) {
+        if (question.type === 'open') {
+          branchData.nodeDataArray.push({
+            label: question.question,
+            key: question.id,
+            color: 'lightblue'
+          })
+
+          if (count < questions.length - 1) {
+            branchData.linkDataArray.push({
+              from: question.id,
+              to: questions[count + 1].id
+            })
+          }
+        } else if (question.type === 'mcq') {
+          let tempAnswer = ''
+          let index = 0
+          branchData.nodeDataArray.push({
+            label: question.question,
+            key: question.id,
+            color: 'lightblue'
+          })
+          for (var answer of Object.values(question.answers)) {
+            if (answer.skipQuestions & answer.skipQuestions.length) {
+              let tmpQuestions = questions.slice(count + 1)
+
+              for (var tmpQuestion of tmpQuestions) {
+                if (answer.skipQuestions.indexOf(tmpQuestion.id) === -1) {
+                  branchData.nodeDataArray.push({
+                    label: answer.value,
+                    key: question.id + '.' + index,
+                    color: 'lightblue'
+                  })
+                  branchData.linkDataArray.push({
+                    from: question.id,
+                    to: question.id + '.' + index
+                  })
+                  branchData.linkDataArray.push({
+                    from: question.id + '.' + index,
+                    to: tmpQuestion.id
+                  })
+                  index++
+
+                  break
+                }
+              }
+            } else {
+              tempAnswer += answer.value + ', '
+            }
+          }
+          branchData.nodeDataArray.push({
+            label: tempAnswer,
+            key: question.id + '.' + index,
+            color: 'lightblue'
+          })
+          branchData.linkDataArray.push({
+            from: question.id,
+            to: question.id + '.' + index
+          })
+          if (count < questions.length - 1) {
+            branchData.linkDataArray.push({
+              from: question.id + '.' + index,
+              to: questions[count + 1].id
+            })
+          }
+        }
+        count++
+      }
+
+      ctx.body = { data: branchData }
+    }
+  },
   deleteQuestion: {
     async method (ctx) {
       const {
@@ -268,7 +360,7 @@ module.exports = (User, config, request) => ({
       let n = 0
       if (predefAnswers && predefAnswers.length) {
         for (var answer of predefAnswers) {
-          predefinedAnswers[n] = { value: answer }
+          predefinedAnswers[n] = { value: answer.value }
           n++
         }
       }
@@ -308,13 +400,13 @@ module.exports = (User, config, request) => ({
 
       let predefinedAnswers = {}
       let n = 0
+      console.log('predef', predefAnswers)
       if (predefAnswers && predefAnswers.length) {
         for (var answer of predefAnswers) {
-          predefinedAnswers[n] = { value: answer }
+          predefinedAnswers[n] = { value: answer.value }
           n++
         }
       }
-      console.log(predefAnswers)
 
       await request.post({
         uri: `${config.constants.URL}/admin/question-update`,

@@ -534,9 +534,9 @@ module.exports = (
           })
         } else {
           const {
-            data: { questionData }
+            data: { answers }
           } = await request.post({
-            uri: `${config.constants.URL}/admin/question-format`,
+            uri: `${config.constants.URL}/admin/question-get-predef-answers`,
             body: {
               secret: process.env.apiSecret,
               data: { questionId: question.id }
@@ -547,7 +547,7 @@ module.exports = (
             id: question.id,
             type: 'mcq',
             question: question.question,
-            answers: questionData.answers
+            answers
           })
         }
       }

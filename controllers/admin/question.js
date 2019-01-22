@@ -523,9 +523,11 @@ module.exports = (
           where: { questionId },
           order: ['displayOrder']
         })
-        predefinedAnswers.forEach(({ answerKey, answerValue }) => {
-          answers[answerKey] = { value: answerValue }
-        })
+        predefinedAnswers.forEach(
+          ({ answerKey, answerValue, skipQuestions }) => {
+            answers[answerKey] = { value: answerValue, skipQuestions }
+          }
+        )
       }
 
       ctx.body = {
