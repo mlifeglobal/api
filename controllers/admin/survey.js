@@ -179,6 +179,35 @@ module.exports = (
       }
     }
   },
+  updatePlatforms: {
+    schema: [
+      [
+        'data',
+        true,
+        [['surveyId', true, 'integer'], ['platforms', true, 'array']]
+      ]
+    ],
+    async method (ctx) {
+      const {
+        data: { surveyId, platforms }
+      } = ctx.request.body
+
+      const survey = await Survey.findOne({ where: { id: surveyId } })
+      if (!survey) {
+        return Bluebird.reject([
+          { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
+        ])
+      }
+
+      await survey.update({
+        platforms
+      })
+
+      ctx.body = {
+        data: `Survey has succesfully published for id: ${survey.id}`
+      }
+    }
+  },
   toggleState: {
     schema: [['data', true, [['surveyId', true, 'integer'], ['state', true]]]],
     async method (ctx) {

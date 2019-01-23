@@ -142,10 +142,9 @@ module.exports = (User, config, request) => ({
       const {
         data: { surveyId, platforms, optInCodes, initCodes }
       } = ctx.request.body
-      console.log(optInCodes, initCodes)
       if (platforms) {
         await request.post({
-          uri: `${config.constants.URL}/admin/survey-publish`,
+          uri: `${config.constants.URL}/admin/survey-update-platforms`,
           body: {
             secret: process.env.apiSecret,
             data: {
@@ -157,7 +156,7 @@ module.exports = (User, config, request) => ({
         })
       }
       if (optInCodes) {
-        await request.post({
+        const { data, ok } = await request.post({
           uri: `${config.constants.URL}/admin/survey-add-opt-in-codes`,
           body: {
             secret: process.env.apiSecret,
@@ -168,6 +167,10 @@ module.exports = (User, config, request) => ({
           },
           json: true
         })
+        if (ok === false) {
+          ctx.body = { message: data }
+          return
+        }
       }
 
       if (initCodes) {
@@ -183,7 +186,7 @@ module.exports = (User, config, request) => ({
           json: true
         })
       }
-      ctx.body = { data: 'sucessfully updated' }
+      ctx.body = { message: 'Platform details have been sucessfully updated' }
     }
   },
   changeState: {
@@ -388,7 +391,10 @@ module.exports = (User, config, request) => ({
         },
         json: true
       })
-      ctx.body = { questions: data }
+      ctx.body = {
+        questions: data,
+        message: 'Question has been succesfully added'
+      }
     }
   },
 
@@ -400,7 +406,6 @@ module.exports = (User, config, request) => ({
 
       let predefinedAnswers = {}
       let n = 0
-      console.log('predef', predefAnswers)
       if (predefAnswers && predefAnswers.length) {
         for (var answer of predefAnswers) {
           predefinedAnswers[n] = { value: answer.value }
