@@ -1,4 +1,4 @@
-module.exports = Demographic => ({
+module.exports = (Demographic, request, config) => ({
   importDefault: {
     async method (ctx) {
       const DEFAULT_DEMOGRAPHICS = [
@@ -36,20 +36,32 @@ module.exports = Demographic => ({
   },
 
   validatePhone: {
+    schema: [['data', true, [['value', true]]]],
     async method (ctx) {
-      ctx.body = { isValid: true }
+      const {
+        data: { value: phone }
+      } = ctx.request.body
+
+      const { valid } = await request.get({
+        uri: `${config.constants.API_LAYER_URL}/validate?access_key=${
+          process.env.numVerifyToken
+        }&number=${phone}`,
+        json: true
+      })
+
+      ctx.body = { valid }
     }
   },
 
   validateAge: {
     async method (ctx) {
-      ctx.body = { isValid: true }
+      ctx.body = { valid: true }
     }
   },
 
   validateCountry: {
     async method (ctx) {
-      ctx.body = { isValid: true }
+      ctx.body = { valid: true }
     }
   }
 })

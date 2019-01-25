@@ -63,11 +63,7 @@ module.exports = (request, config, africasTalking, IncentiveRecord) => ({
       [
         'data',
         true,
-        [
-          ['phones', true, 'array'],
-          ['amount', true],
-          ['surveyId', true, 'integer']
-        ]
+        [['phones', true, 'array'], ['amount', true], ['surveyId', 'integer']]
       ]
     ],
     async method (ctx) {
@@ -94,7 +90,7 @@ module.exports = (request, config, africasTalking, IncentiveRecord) => ({
           amount: amountSent,
           phone: phoneNumber,
           requestId,
-          surveyId,
+          surveyId: surveyId || -1,
           status: errorMessage === 'None' ? 'Sent' : 'Failed'
         })
       }
@@ -154,7 +150,7 @@ module.exports = (request, config, africasTalking, IncentiveRecord) => ({
           ['numbers', true, 'array'],
           ['incentive', true, 'integer'],
           ['currency', true],
-          ['surveyId', true, 'integer']
+          ['surveyId', 'integer']
         ]
       ]
     ],

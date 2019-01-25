@@ -626,7 +626,7 @@ module.exports = (
           let isValid = true
 
           if (validation.includes('URL_')) {
-            const validationRes = await request.post({
+            const { valid } = await request.post({
               uri: `${config.constants.URL}/admin/demographics-${
                 validation.split('_')[1]
               }`,
@@ -637,7 +637,7 @@ module.exports = (
               },
               json: true
             })
-            isValid = validationRes.isValid
+            isValid = valid
           } else {
             const re = new RegExp(validation)
             isValid = re.test(answersToStore[0])
@@ -746,6 +746,7 @@ module.exports = (
   fetchData: {
     schema: [['data', true, [['surveyId', true, 'integer']]]],
     async method (ctx) {
+      ctx.request.socket.setTimeout(5 * 60 * 1000)
       const {
         data: { surveyId }
       } = ctx.request.body
@@ -765,7 +766,7 @@ module.exports = (
           let answer = answers[0]
           if (questionType === 'mcq') {
             const prefedefinedAnswers = await PredefinedAnswer.findAll({
-              where: { answerKey: { [Sequelize.Op.in]: answers } }
+              where: { questionId, answerKey: { [Sequelize.Op.in]: answers } }
             })
             answer = prefedefinedAnswers
               .map(({ answerValue }) => answerValue)
@@ -792,12 +793,13 @@ module.exports = (
   saveData: {
     schema: [['data', true, [['surveyId', true, 'integer']]]],
     async method (ctx) {
+      ctx.request.socket.setTimeout(5 * 60 * 1000)
       const {
         data: { surveyId }
       } = ctx.request.body
 
       const writer = csvWriter({
-        path: 'participantAnswers.csv',
+        path: `survey${surveyId}_participant_answers.csv`,
         header: [
           { id: 'qid', title: 'Question ID' },
           { id: 'question', title: 'Question' },
@@ -824,7 +826,7 @@ module.exports = (
           let answer = answers[0]
           if (questionType === 'mcq') {
             const prefedefinedAnswers = await PredefinedAnswer.findAll({
-              where: { answerKey: { [Sequelize.Op.in]: answers } }
+              where: { questionId, answerKey: { [Sequelize.Op.in]: answers } }
             })
             answer = prefedefinedAnswers
               .map(({ answerValue }) => answerValue)
@@ -845,7 +847,6 @@ module.exports = (
           records.push(tmpRow)
         }
       }
-      console.log(records)
       await writer.writeRecords(records)
       ctx.body = {}
     }

@@ -977,6 +977,12 @@ module.exports = (Question, Survey, request, config, Bluebird, fs) => ({
         return Bluebird.reject([{ key: 'Error', value: `Survey not found` }])
       }
 
+      request.post({
+        uri: process.env.slackWebhookURL,
+        body: { text: 'Please wait while we prepare the results.' },
+        json: true
+      })
+
       await request.post({
         uri: `${config.constants.URL}/admin/participant-save-data`,
         body: {
@@ -986,19 +992,20 @@ module.exports = (Question, Survey, request, config, Bluebird, fs) => ({
         json: true
       })
 
-      const response = await request.post({
+      request.post({
         uri: `${config.constants.SLACK_API}/files.upload`,
         headers: {
           Authorization: `Bearer ${process.env.slackAccessToken}`
         },
         formData: {
-          file: fs.createReadStream('participantAnswers.csv'),
+          file: fs.createReadStream(
+            `survey${survey.id}_participant_answers.csv`
+          ),
           channels: process.env.slackChannel,
           initial_comment: 'Participant Answers'
         }
       })
 
-      console.log(response)
       ctx.body = ''
     }
   },

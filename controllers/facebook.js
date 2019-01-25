@@ -3,66 +3,66 @@ module.exports = (request, config, FacebookConfig, Bluebird) => ({
     async method (ctx) {
       const { object, entry } = ctx.request.body
       if (object === 'page') {
-        const { messaging } = entry[0]
+        const { id: pageId, messaging } = entry[0]
         const {
           sender: { id: senderId },
           message: messageObj,
           postback: postbackObj
         } = messaging[0]
 
-        const pageId = entry[0].id
-
         if (messageObj) {
           const { mid: messageId, text: msg } = messageObj
 
-          const {
-            data: { reply, questionData }
-          } = await request.post({
-            uri: `${config.constants.URL}/admin/filler-process`,
-            body: {
-              secret: process.env.apiSecret,
-              data: {
-                identifier: senderId,
-                message: msg,
-                platform: 'facebook',
-                fbPageId: pageId,
-                messageIdentifier: messageId
-              }
-            },
-            json: true
-          })
-
-          if (reply) {
-            console.log(questionData)
-
-            let quickReplies = []
-            let attachmentKey = ''
-            if (questionData && questionData.answers) {
-              quickReplies = Object.keys(questionData.answers).map(
-                answerKey => ({
-                  content_type: 'text',
-                  title: answerKey,
-                  payload: answerKey
-                })
-              )
-            }
-
-            if (questionData && questionData.attachmentKey) {
-              attachmentKey = questionData.attachmentKey
-            }
-            await request.post({
-              uri: `${config.constants.URL}/facebook-send`,
+          if (msg) {
+            const {
+              data: { reply, questionData }
+            } = await request.post({
+              uri: `${config.constants.URL}/admin/filler-process`,
               body: {
+                secret: process.env.apiSecret,
                 data: {
-                  pageId,
-                  facebookId: senderId,
-                  message: reply,
-                  quickReplies,
-                  attachmentKey
+                  identifier: senderId,
+                  message: msg,
+                  platform: 'facebook',
+                  fbPageId: pageId,
+                  messageIdentifier: messageId
                 }
               },
               json: true
             })
+
+            if (reply) {
+              console.log(questionData)
+
+              let quickReplies = []
+              let attachmentKey = ''
+              if (questionData && questionData.answers) {
+                quickReplies = Object.keys(questionData.answers).map(
+                  answerKey => ({
+                    content_type: 'text',
+                    title: answerKey,
+                    payload: answerKey
+                  })
+                )
+              }
+
+              if (questionData && questionData.attachmentKey) {
+                attachmentKey = questionData.attachmentKey
+              }
+              await request.post({
+                uri: `${config.constants.URL}/facebook-send`,
+                body: {
+                  data: {
+                    pageId,
+                    facebookId: senderId,
+                    message: reply,
+                    quickReplies,
+                    attachmentKey
+                  }
+                },
+                json: true
+              })
+            }
           }
         } else if (postbackObj) {
           const { payload } = postbackObj
