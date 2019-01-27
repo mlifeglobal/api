@@ -524,12 +524,12 @@ module.exports = (
           order: ['displayOrder']
         })
         predefinedAnswers.forEach(
-          ({ answerKey, answerValue, skipQuestions }) => {
-            answers[answerKey] = { value: answerValue, skipQuestions }
+          ({ answerKey, answerValue, skipQuestions, id }) => {
+            answers[answerKey] = { value: answerValue, skipQuestions, id }
           }
         )
       }
-
+      console.log('answeers', answers)
       ctx.body = {
         data: { answers }
       }

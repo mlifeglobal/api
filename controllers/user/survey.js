@@ -52,7 +52,7 @@ module.exports = (User, config, request) => ({
         }
       } = ctx.request.body
 
-      const { data, surveyId } = await request.post({
+      await request.post({
         uri: `${config.constants.URL}/admin/survey-create`,
         body: {
           secret: process.env.apiSecret,
@@ -67,8 +67,6 @@ module.exports = (User, config, request) => ({
         },
         json: true
       })
-
-      console.log(data, surveyId)
 
       ctx.body = { data: 'Survey has been succesfully created' }
     }
@@ -275,7 +273,7 @@ module.exports = (User, config, request) => ({
             color: 'lightblue'
           })
           for (var answer of Object.values(question.answers)) {
-            if (answer.skipQuestions & answer.skipQuestions.length) {
+            if (answer.skipQuestions && answer.skipQuestions.length) {
               let tmpQuestions = questions.slice(count + 1)
 
               for (var tmpQuestion of tmpQuestions) {
@@ -320,7 +318,6 @@ module.exports = (User, config, request) => ({
         }
         count++
       }
-
       ctx.body = { data: branchData }
     }
   },
@@ -350,7 +347,10 @@ module.exports = (User, config, request) => ({
         },
         json: true
       })
-      ctx.body = { questions: data }
+      ctx.body = {
+        questions: data,
+        message: 'Question has been successfully deleted'
+      }
     }
   },
   addQuestion: {
@@ -397,7 +397,75 @@ module.exports = (User, config, request) => ({
       }
     }
   },
+  addQuestion: {
+    async method (ctx) {
+      const {
+        data: { question, surveyId, questionType, predefAnswers }
+      } = ctx.request.body
 
+      let predefinedAnswers = {}
+      let n = 0
+      if (predefAnswers && predefAnswers.length) {
+        for (var answer of predefAnswers) {
+          predefinedAnswers[n] = { value: answer.value }
+          n++
+        }
+      }
+
+      await request.post({
+        uri: `${config.constants.URL}/admin/question-create`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId,
+            question,
+            questionType,
+            predefinedAnswers
+          }
+        },
+        json: true
+      })
+      const { data } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-questions-obj`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId
+          }
+        },
+        json: true
+      })
+      ctx.body = {
+        questions: data,
+        message: 'Question has been succesfully added'
+      }
+    }
+  },
+  setBranch: {
+    async method (ctx) {
+      const {
+        data: { questions, predefinedAnswerId }
+      } = ctx.request.body
+      let skipQuestions = []
+      questions.map(question => {
+        skipQuestions.push(question.value)
+      })
+
+      await request.post({
+        uri: `${config.constants.URL}/admin/question-set-branch`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            predefinedAnswerId,
+            skipQuestions
+          }
+        },
+        json: true
+      })
+
+      ctx.body = { message: 'Branching has been successfully set' }
+    }
+  },
   updateQuestion: {
     async method (ctx) {
       const {
