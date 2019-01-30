@@ -529,7 +529,6 @@ module.exports = (
           }
         )
       }
-      console.log('answeers', answers)
       ctx.body = {
         data: { answers }
       }

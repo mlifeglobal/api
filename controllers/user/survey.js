@@ -356,7 +356,7 @@ module.exports = (User, config, request) => ({
   addQuestion: {
     async method (ctx) {
       const {
-        data: { question, surveyId, questionType, predefAnswers }
+        data: { question, surveyId, questionType, predefAnswers, answerType }
       } = ctx.request.body
 
       let predefinedAnswers = {}
@@ -376,51 +376,8 @@ module.exports = (User, config, request) => ({
             surveyId,
             question,
             questionType,
-            predefinedAnswers
-          }
-        },
-        json: true
-      })
-      const { data } = await request.post({
-        uri: `${config.constants.URL}/admin/survey-get-questions-obj`,
-        body: {
-          secret: process.env.apiSecret,
-          data: {
-            surveyId
-          }
-        },
-        json: true
-      })
-      ctx.body = {
-        questions: data,
-        message: 'Question has been succesfully added'
-      }
-    }
-  },
-  addQuestion: {
-    async method (ctx) {
-      const {
-        data: { question, surveyId, questionType, predefAnswers }
-      } = ctx.request.body
-
-      let predefinedAnswers = {}
-      let n = 0
-      if (predefAnswers && predefAnswers.length) {
-        for (var answer of predefAnswers) {
-          predefinedAnswers[n] = { value: answer.value }
-          n++
-        }
-      }
-
-      await request.post({
-        uri: `${config.constants.URL}/admin/question-create`,
-        body: {
-          secret: process.env.apiSecret,
-          data: {
-            surveyId,
-            question,
-            questionType,
-            predefinedAnswers
+            predefinedAnswers,
+            answerType
           }
         },
         json: true
@@ -469,7 +426,14 @@ module.exports = (User, config, request) => ({
   updateQuestion: {
     async method (ctx) {
       const {
-        data: { question, surveyId, questionId, questionType, predefAnswers }
+        data: {
+          question,
+          surveyId,
+          questionId,
+          questionType,
+          predefAnswers,
+          answerType
+        }
       } = ctx.request.body
 
       let predefinedAnswers = {}
@@ -489,7 +453,8 @@ module.exports = (User, config, request) => ({
             questionId,
             question,
             questionType,
-            predefinedAnswers
+            predefinedAnswers,
+            answerType
           }
         },
         json: true

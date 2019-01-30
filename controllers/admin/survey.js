@@ -470,12 +470,11 @@ module.exports = (
         query.limit = limit
       }
       const surveys = await Survey.findAll(query)
-
+      const surveysCount = await Survey.count()
       ctx.body = {
         data: {
           surveys,
-          surveysCount:
-            surveys && surveys.constructor === Array ? surveys.length : 0
+          surveysCount
         }
       }
     }
@@ -559,7 +558,8 @@ module.exports = (
           questionsObj.push({
             id: question.id,
             type: 'open',
-            question: question.question
+            question: question.question,
+            answerType: question.answerType
           })
         } else {
           const {
@@ -576,6 +576,7 @@ module.exports = (
             id: question.id,
             type: 'mcq',
             question: question.question,
+            answerType: question.answerType,
             answers
           })
         }
