@@ -465,7 +465,26 @@ module.exports = (
         data: { clientID, offset, limit }
       } = ctx.request.body
 
-      const query = { where: { clientID }, offset }
+      const query = {
+        attributes: {
+          include: [
+            [
+              Sequelize.fn('COUNT', Sequelize.col('questions.id')),
+              'questionsCount'
+            ]
+          ]
+        },
+        include: [
+          {
+            model: Question,
+            attributes: [],
+            duplicating: false
+          }
+        ],
+        group: ['survey.id'],
+        where: { clientID },
+        offset
+      }
       if (limit > 0) {
         query.limit = limit
       }
