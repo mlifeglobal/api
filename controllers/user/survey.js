@@ -300,18 +300,25 @@ module.exports = (User, config, request) => ({
               tempAnswer += answer.value + ', '
             }
           }
-          branchData.nodeDataArray.push({
-            label: tempAnswer,
-            key: question.id + '.' + index,
-            color: 'lightblue'
-          })
-          branchData.linkDataArray.push({
-            from: question.id,
-            to: question.id + '.' + index
-          })
-          if (count < questions.length - 1) {
+          if (index > 0) {
+            branchData.nodeDataArray.push({
+              label: tempAnswer,
+              key: question.id + '.' + index,
+              color: 'lightblue'
+            })
             branchData.linkDataArray.push({
-              from: question.id + '.' + index,
+              from: question.id,
+              to: question.id + '.' + index
+            })
+            if (count < questions.length - 1) {
+              branchData.linkDataArray.push({
+                from: question.id + '.' + index,
+                to: questions[count + 1].id
+              })
+            }
+          } else if (count < questions.length - 1) {
+            branchData.linkDataArray.push({
+              from: question.id,
               to: questions[count + 1].id
             })
           }
