@@ -280,7 +280,6 @@ module.exports = (
       const {
         data: { surveyId, optInCodes: givenOptInCodes }
       } = ctx.request.body
-      console.log('optincodes', givenOptInCodes)
       const survey = await Survey.findOne({ where: { id: surveyId } })
       if (!survey) {
         return Bluebird.reject([
@@ -498,6 +497,39 @@ module.exports = (
       }
     }
   },
+  getCurrent: {
+    schema: [['data', true, [['surveyId', true, 'integer']]]],
+    async method (ctx) {
+      const {
+        data: { surveyId }
+      } = ctx.request.body
+
+      const query = {
+        attributes: {
+          include: [
+            [
+              Sequelize.fn('COUNT', Sequelize.col('questions.id')),
+              'questionsCount'
+            ]
+          ]
+        },
+        include: [
+          {
+            model: Question,
+            attributes: [],
+            duplicating: false
+          }
+        ],
+        group: ['survey.id'],
+        where: { id: surveyId }
+      }
+
+      const survey = await Survey.findOne(query)
+      ctx.body = {
+        survey
+      }
+    }
+  },
   getQuestions: {
     schema: [['data', true, [['surveyId', true, 'integer']]]],
     async method (ctx) {
@@ -558,7 +590,14 @@ module.exports = (
         data: { surveyId }
       } = ctx.request.body
 
-      const survey = await Survey.findOne({ where: { id: surveyId } })
+      const { survey } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-current`,
+        body: {
+          secret: process.env.apiSecret,
+          data: { surveyId }
+        },
+        json: true
+      })
       if (!survey) {
         return Bluebird.reject([
           { key: 'survey', value: `Survey not found for ID: ${surveyId}` }
@@ -601,7 +640,8 @@ module.exports = (
         }
       }
       ctx.body = {
-        data: questionsObj
+        data: questionsObj,
+        currentSurvey: survey
       }
     }
   },

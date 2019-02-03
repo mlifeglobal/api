@@ -166,7 +166,17 @@ module.exports = (User, config, request) => ({
           json: true
         })
         if (ok === false) {
-          ctx.body = { message: data }
+          const { survey } = await request.post({
+            uri: `${config.constants.URL}/admin/survey-get-current`,
+            body: {
+              secret: process.env.apiSecret,
+              data: {
+                surveyId
+              }
+            },
+            json: true
+          })
+          ctx.body = { message: data, survey }
           return
         }
       }
@@ -184,7 +194,21 @@ module.exports = (User, config, request) => ({
           json: true
         })
       }
-      ctx.body = { message: 'Platform details have been sucessfully updated' }
+
+      const { survey } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-current`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId
+          }
+        },
+        json: true
+      })
+      ctx.body = {
+        survey,
+        message: 'Platform details have been sucessfully updated'
+      }
     }
   },
   changeState: {
@@ -258,6 +282,7 @@ module.exports = (User, config, request) => ({
         },
         json: true
       })
+
       ctx.body = {
         questions: data,
         message: 'Questions order has been succesfully updated'
@@ -378,7 +403,7 @@ module.exports = (User, config, request) => ({
         },
         json: true
       })
-      const { data } = await request.post({
+      const { data, currentSurvey } = await request.post({
         uri: `${config.constants.URL}/admin/survey-get-questions-obj`,
         body: {
           secret: process.env.apiSecret,
@@ -390,7 +415,8 @@ module.exports = (User, config, request) => ({
       })
       ctx.body = {
         questions: data,
-        message: 'Question has been successfully deleted'
+        message: 'Question has been successfully deleted',
+        survey: currentSurvey
       }
     }
   },
@@ -401,7 +427,8 @@ module.exports = (User, config, request) => ({
       } = ctx.request.body
 
       let predefinedAnswers = {}
-      let n = 0
+      let n = 1
+      console.log(predefAnswers)
       if (predefAnswers && predefAnswers.length) {
         for (var answer of predefAnswers) {
           predefinedAnswers[n] = { value: answer.value }
@@ -423,7 +450,7 @@ module.exports = (User, config, request) => ({
         },
         json: true
       })
-      const { data } = await request.post({
+      const { data, currentSurvey } = await request.post({
         uri: `${config.constants.URL}/admin/survey-get-questions-obj`,
         body: {
           secret: process.env.apiSecret,
@@ -435,7 +462,8 @@ module.exports = (User, config, request) => ({
       })
       ctx.body = {
         questions: data,
-        message: 'Question has been succesfully added'
+        message: 'Question has been succesfully added',
+        survey: currentSurvey
       }
     }
   },
