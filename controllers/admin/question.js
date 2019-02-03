@@ -340,7 +340,6 @@ module.exports = (
           }
         ])
       }
-
       let tempOrder = question1.order
       await question1.update({ order: question2.order })
       await question2.update({ order: tempOrder })

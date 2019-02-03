@@ -230,6 +230,40 @@ module.exports = (User, config, request) => ({
       ctx.body = { questions: data }
     }
   },
+  questionChangeOrder: {
+    async method (ctx) {
+      const {
+        data: { surveyId, questionId1, questionId2 }
+      } = ctx.request.body
+
+      await request.post({
+        uri: `${config.constants.URL}/admin/question-change-order`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            questionId1,
+            questionId2
+          }
+        },
+        json: true
+      })
+
+      const { data } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-questions-obj`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId
+          }
+        },
+        json: true
+      })
+      ctx.body = {
+        questions: data,
+        message: 'Questions order has been succesfully updated'
+      }
+    }
+  },
   getBranchingData: {
     async method (ctx) {
       const {
