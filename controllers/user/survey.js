@@ -155,7 +155,7 @@ module.exports = (User, config, request) => ({
       }
       if (optInCodes) {
         const { data, ok } = await request.post({
-          uri: `${config.constants.URL}/admin/survey-add-opt-in-codes`,
+          uri: `${config.constants.URL}/admin/survey-update`,
           body: {
             secret: process.env.apiSecret,
             data: {
@@ -183,7 +183,7 @@ module.exports = (User, config, request) => ({
 
       if (initCodes) {
         await request.post({
-          uri: `${config.constants.URL}/admin/survey-add-init-codes`,
+          uri: `${config.constants.URL}/admin/survey-update`,
           body: {
             secret: process.env.apiSecret,
             data: {
@@ -428,11 +428,12 @@ module.exports = (User, config, request) => ({
 
       let predefinedAnswers = {}
       let n = 1
-      console.log(predefAnswers)
       if (predefAnswers && predefAnswers.length) {
         for (var answer of predefAnswers) {
-          predefinedAnswers[n] = { value: answer.value }
-          n++
+          if (answer.value) {
+            predefinedAnswers[n] = { value: answer.value }
+            n++
+          }
         }
       }
 
@@ -506,11 +507,13 @@ module.exports = (User, config, request) => ({
       } = ctx.request.body
 
       let predefinedAnswers = {}
-      let n = 0
+      let n = 1
       if (predefAnswers && predefAnswers.length) {
         for (var answer of predefAnswers) {
-          predefinedAnswers[n] = { value: answer.value }
-          n++
+          if (answer.value) {
+            predefinedAnswers[n] = { value: answer.value }
+            n++
+          }
         }
       }
 
