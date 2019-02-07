@@ -471,7 +471,7 @@ module.exports = (User, config, request) => ({
   setBranch: {
     async method (ctx) {
       const {
-        data: { questions, predefinedAnswerId }
+        data: { questions, predefinedAnswerId, surveyId }
       } = ctx.request.body
       let skipQuestions = []
       questions.map(question => {
@@ -489,8 +489,20 @@ module.exports = (User, config, request) => ({
         },
         json: true
       })
-
-      ctx.body = { message: 'Branching has been successfully set' }
+      const { data } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-questions-obj`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId
+          }
+        },
+        json: true
+      })
+      ctx.body = {
+        message: 'Branching has been successfully set',
+        questions: data
+      }
     }
   },
   updateQuestion: {
