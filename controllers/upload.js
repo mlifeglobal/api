@@ -142,7 +142,7 @@ module.exports = (
       }
 
       var file = files[0]
-      console.log(file.mimeType)
+
       var params = {
         Bucket: process.env.s3BucketName,
         Body: file,
@@ -152,7 +152,7 @@ module.exports = (
       const response = await s3.upload(params).promise()
 
       if (response.Location) {
-        const question = await request.post({
+        await request.post({
           uri: `${config.constants.URL}/admin/question-create`,
           body: {
             secret: process.env.apiSecret,
@@ -165,9 +165,21 @@ module.exports = (
           },
           json: true
         })
-        console.log(question)
       }
-      ctx.body = { url: response.Location, key: file.filename }
+      const { data } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-questions-obj`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId: parseInt(surveyId)
+          }
+        },
+        json: true
+      })
+      ctx.body = {
+        questions: data,
+        message: 'Question has been succesfully created'
+      }
     }
   },
 
