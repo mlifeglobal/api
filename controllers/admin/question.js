@@ -364,14 +364,6 @@ module.exports = (
         data: { predefinedAnswerId, skipQuestions }
       } = ctx.request.body
 
-      if (skipQuestions.length === 0) {
-        return Bluebird.reject([
-          {
-            key: 'skipQuestions',
-            value: `No skip question ids have been provided`
-          }
-        ])
-      }
       const predefinedAnswer = await PredefinedAnswer.findOne({
         where: { id: predefinedAnswerId }
       })

@@ -130,7 +130,7 @@ module.exports = (
     async method (ctx) {
       const {
         files,
-        fields: { text, surveyId }
+        fields: { text, surveyId, questionType, predefAnswers, answerType }
       } = await asyncBusboy(ctx.req)
 
       // Authorization check
@@ -140,9 +140,19 @@ module.exports = (
           errors: 'survey id has not been provided'
         })
       }
-
+      let predefAnswersObj = JSON.parse(predefAnswers)
+      let predefinedAnswers = {}
+      let n = 1
+      if (predefAnswersObj && predefAnswersObj.length) {
+        for (var answer of predefAnswersObj) {
+          if (answer.value) {
+            predefinedAnswers[n] = { value: answer.value }
+            n++
+          }
+        }
+      }
       var file = files[0]
-      console.log(file.mimeType)
+
       var params = {
         Bucket: process.env.s3BucketName,
         Body: file,
@@ -152,7 +162,7 @@ module.exports = (
       const response = await s3.upload(params).promise()
 
       if (response.Location) {
-        const question = await request.post({
+        await request.post({
           uri: `${config.constants.URL}/admin/question-create`,
           body: {
             secret: process.env.apiSecret,
@@ -160,14 +170,29 @@ module.exports = (
               hasAttachment: true,
               attachmentKey: response.Location,
               question: text,
+              questionType,
+              answerType,
+              predefinedAnswers,
               surveyId: parseInt(surveyId)
             }
           },
           json: true
         })
-        console.log(question)
       }
-      ctx.body = { url: response.Location, key: file.filename }
+      const { data } = await request.post({
+        uri: `${config.constants.URL}/admin/survey-get-questions-obj`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId: parseInt(surveyId)
+          }
+        },
+        json: true
+      })
+      ctx.body = {
+        questions: data,
+        message: 'Question has been succesfully created'
+      }
     }
   },
 
