@@ -130,7 +130,7 @@ module.exports = (
     async method (ctx) {
       const {
         files,
-        fields: { secret, text, surveyId }
+        fields: { text, surveyId }
       } = await asyncBusboy(ctx.req)
 
       // Authorization check
