@@ -617,7 +617,8 @@ module.exports = (
             id: question.id,
             type: 'open',
             question: question.question,
-            answerType: question.answerType
+            answerType: question.answerType,
+            attachmentKey: question.attachmentKey
           })
         } else {
           const {
@@ -634,6 +635,7 @@ module.exports = (
             id: question.id,
             type: 'mcq',
             question: question.question,
+            attachmentKey: question.attachmentKey,
             answerType: question.answerType,
             answers
           })

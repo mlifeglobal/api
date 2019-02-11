@@ -130,7 +130,14 @@ module.exports = (
     async method (ctx) {
       const {
         files,
-        fields: { secret, text, surveyId }
+        fields: {
+          secret,
+          text,
+          surveyId,
+          questionType,
+          predefAnswers,
+          answerType
+        }
       } = await asyncBusboy(ctx.req)
 
       // Authorization check
@@ -140,7 +147,17 @@ module.exports = (
           errors: 'survey id has not been provided'
         })
       }
-
+      let predefAnswersObj = JSON.parse(predefAnswers)
+      let predefinedAnswers = {}
+      let n = 1
+      if (predefAnswersObj && predefAnswersObj.length) {
+        for (var answer of predefAnswersObj) {
+          if (answer.value) {
+            predefinedAnswers[n] = { value: answer.value }
+            n++
+          }
+        }
+      }
       var file = files[0]
 
       var params = {
@@ -160,6 +177,9 @@ module.exports = (
               hasAttachment: true,
               attachmentKey: response.Location,
               question: text,
+              questionType,
+              answerType,
+              predefinedAnswers,
               surveyId: parseInt(surveyId)
             }
           },
