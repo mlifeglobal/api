@@ -71,6 +71,27 @@ module.exports = (User, config, request) => ({
       ctx.body = { data: 'Survey has been succesfully created' }
     }
   },
+  delete: {
+    schema: [['data', true, [['surveyId', true, 'integer']]]],
+    async method (ctx) {
+      const {
+        data: { surveyId }
+      } = ctx.request.body
+
+      await request.post({
+        uri: `${config.constants.URL}/admin/survey-delete`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            surveyId
+          }
+        },
+        json: true
+      })
+
+      ctx.body = { data: 'Survey has been succesfully deleted' }
+    }
+  },
   updateDetails: {
     schema: [
       [
