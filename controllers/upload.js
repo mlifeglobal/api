@@ -151,28 +151,40 @@ module.exports = (
           }
         }
       }
+
+      const { questionId } = await request.post({
+        uri: `${config.constants.URL}/admin/question-create`,
+        body: {
+          secret: process.env.apiSecret,
+          data: {
+            question: text,
+            questionType,
+            answerType,
+            predefinedAnswers,
+            surveyId: parseInt(surveyId)
+          }
+        },
+        json: true
+      })
+
       var file = files[0]
 
       var params = {
         Bucket: process.env.s3BucketName,
         Body: file,
-        Key: file.filename,
+        Key: `Question${questionId}/${file.filename}`,
         ContentType: file.mimeType
       }
       const response = await s3.upload(params).promise()
 
       if (response.Location) {
         await request.post({
-          uri: `${config.constants.URL}/admin/question-create`,
+          uri: `${config.constants.URL}/admin/question-update`,
           body: {
             secret: process.env.apiSecret,
             data: {
-              hasAttachment: true,
+              questionId,
               attachmentKey: response.Location,
-              question: text,
-              questionType,
-              answerType,
-              predefinedAnswers,
               surveyId: parseInt(surveyId)
             }
           },

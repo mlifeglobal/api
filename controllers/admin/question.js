@@ -234,7 +234,8 @@ module.exports = (
           ['question'],
           ['predefinedAnswers', 'object'],
           ['questionType'],
-          ['answerType']
+          ['answerType'],
+          ['attachmentKey']
         ]
       ]
     ],
@@ -245,7 +246,8 @@ module.exports = (
           question,
           predefinedAnswers,
           questionType,
-          answerType
+          answerType,
+          attachmentKey
         }
       } = ctx.request.body
 
@@ -260,7 +262,10 @@ module.exports = (
       if (question) questionUpdateObj.question = question
       if (questionType) questionUpdateObj.questionType = questionType
       if (answerType) questionUpdateObj.answerType = answerType
-
+      if (attachmentKey) {
+        questionUpdateObj.hasAttachment = true
+        questionUpdateObj.attachmentKey = attachmentKey
+      }
       if (predefinedAnswers && Object.keys(predefinedAnswers).length) {
         for (const answerKey in predefinedAnswers) {
           const curPredefinedAnswer = await PredefinedAnswer.findOne({
