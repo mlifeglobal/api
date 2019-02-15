@@ -6,7 +6,10 @@ module.exports = (
   PredefinedAnswer,
   ParticipantAnswer,
   Demographic,
-  lodash
+  lodash,
+  request,
+  config,
+  s3
 ) => ({
   create: {
     schema: [
@@ -97,10 +100,51 @@ module.exports = (
           { key: 'question', value: `Question not found for ID: ${questionId}` }
         ])
       }
-
+      if (question.hasAttachment) {
+        console.log('Deleting Attachments\n')
+        await request.post({
+          uri: `${config.constants.URL}/admin/question-delete-files`,
+          body: {
+            secret: process.env.apiSecret,
+            data: {
+              questionId
+            }
+          },
+          json: true
+        })
+      }
       await Question.destroy({ where: { id: questionId } })
 
       ctx.body = { data: { questionId } }
+    }
+  },
+  deleteFiles: {
+    async method (ctx) {
+      const {
+        data: { questionId }
+      } = ctx.request.body
+
+      const listParams = {
+        Bucket: process.env.s3BucketName,
+        Prefix: `Question${questionId}`
+      }
+
+      const listedObjects = await s3.listObjectsV2(listParams).promise()
+
+      if (listedObjects.Contents.length === 0) return
+
+      const deleteParams = {
+        Bucket: process.env.s3BucketName,
+        Delete: { Objects: [] }
+      }
+
+      listedObjects.Contents.forEach(({ Key }) => {
+        deleteParams.Delete.Objects.push({ Key })
+      })
+
+      await s3.deleteObjects(deleteParams).promise()
+
+      ctx.body = { success: true }
     }
   },
   publish: {
